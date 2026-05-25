@@ -87,6 +87,17 @@ Line Line::operator / (float x) {
 	return tmp /= x;
 }
 
+Line Line::operator * (Matrix x) {
+	if (n != x.size_x()) throw_error("Mismatched matrix size in vector x matrix multiplication");
+	int xm = x.size_y();
+	Line res(xm);
+	for (int k = 0; k < n; ++k)
+		for (int j = 0; j < xm; ++j)
+			res[j] += (*this)[k] * x[k][j];
+	return res;
+}
+
+
 std::ostream& operator << (std::ostream& os, Line x) {
 	os << "(";
 	for (int i = 0; i + 1 < x.size(); ++i) os << x[i] << ", ";
@@ -223,8 +234,8 @@ std::ostream& operator << (std::ostream& os, Matrix x) {
 	for (int i = 0; i < x.size_x(); ++i) {
 		os << "(";
 		for(int j = 0; j < x.size_y(); ++j) 
-			os << x[i][j] << (j + 1 == x.size_y())?"":", ";
-		os << x[i][x.size_y() - 1] << ")" << (i + 1 == x.size_x()) ? "" : ", ";
+			os << x[i][j] << ((j + 1 == x.size_y())?"":", ");
+		os << ")" << ((i + 1 == x.size_x()) ? "" : ", ");
 	}
 	os << "]";
 	return os;

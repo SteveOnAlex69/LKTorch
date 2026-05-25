@@ -3,6 +3,9 @@
 
 #include <iostream>
 
+class Line;
+class Matrix;
+
 class Line {
 public:
 	Line(int _n = 0);
@@ -23,6 +26,8 @@ public:
 	Line operator - (Line x);
 	Line operator * (float x);
 	Line operator / (float x);
+
+	Line operator * (Matrix x);
 private:
 	int n;
 	float* a;
