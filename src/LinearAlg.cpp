@@ -98,6 +98,14 @@ Line Line::operator * (Matrix x) {
 }
 
 
+Matrix Line::outer_multiply(Line y) {
+	Matrix ans(n, y.size());
+	for (int i = 0; i < n; ++i) for (int j = 0; j < y.size(); ++j)
+		ans[i][j] = a[i] * y[j];
+	return ans;
+}
+
+
 std::ostream& operator << (std::ostream& os, Line x) {
 	os << "(";
 	for (int i = 0; i + 1 < x.size(); ++i) os << x[i] << ", ";
@@ -217,7 +225,6 @@ Matrix Matrix::operator / (float x) {
 	return tmp /= x;
 }
 
-
 Matrix Matrix::operator * (Matrix x) {
 	if (m != x.size_x()) throw_error("Mismatched matrix size in mat mul");
 	int xm = x.size_y();
@@ -228,6 +235,15 @@ Matrix Matrix::operator * (Matrix x) {
 				res[i][j] += (*this)[i][k] * x[k][j];
 	return res;
 }
+
+Matrix Matrix::transpose() {
+	Matrix res(m, n);
+	for (int i = 0; i < n; ++i)
+		for (int j = 0; j < m; ++j)
+			res[j][i] = (*this)[i][j];
+	return res;
+}
+
 
 std::ostream& operator << (std::ostream& os, Matrix x) {
 	os << "[";

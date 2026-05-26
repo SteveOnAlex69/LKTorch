@@ -25,7 +25,7 @@ add_executable(LKTorch "src/main.cpp")
 target_include_directories(LKTorch PRIVATE
 	${CMAKE_SOURCE_DIR}/include
 )
-target_sources(LKTorch PRIVATE "src/LinearAlg.cpp" "src/DebugAssist.cpp")
+target_sources(LKTorch PRIVATE "src/LinearAlg.cpp" "src/DebugAssist.cpp" "src/Layer.cpp" "src/Tensor.cpp")
 
 
 #Inputing the folder for accessing assets

@@ -1,7 +1,7 @@
 ﻿## Todo list
 
 - Define a vector, which is just a one dimensional array. Define addition, subtraction, scalar multiplication. (DONE)
-- Define a matrix, which is a two dimentional array. Define addition, subtraction, scalar multiplication, and multiplication.
+- Define a matrix, which is a two dimentional array. Define addition, subtraction, scalar multiplication, and multiplication. (DONE)
 - Define a transformation, which stores:
 	+ The type of transformation it is (activation function, or matrix computation). If it's matrix computation:
 		* The current matrix weight (two matrices, w and b).

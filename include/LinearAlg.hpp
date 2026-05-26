@@ -28,6 +28,8 @@ public:
 	Line operator / (float x);
 
 	Line operator * (Matrix x);
+
+	Matrix outer_multiply(Line y);
 private:
 	int n;
 	float* a;
