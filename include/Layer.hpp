@@ -1,24 +1,21 @@
 #ifndef LAYER_HPP
 #define LAYER_HPP
 
-#include <DebugAssist.hpp>
-#include <LinearAlg.hpp>
+#include <Tensor.hpp>
+#include <vector>
 
-// this define all kinds of tensor transformation that could happen.
+class LinearLayer {
+public:
+	LinearLayer(int x, int y);
+	void randomize_weight();
 
-struct LinearLayer {
-public: 
-	LinearLayer(int n, int m);
-	Line forward(Line x);
-	Line backward(Line x, Line dX);
-	void zero_gradient();
+	Tensor forward(Tensor x);
+	Tensor operator () (Tensor x);
 
+	std::vector<Tensor> get_parameters();
 private:
-	int n, m; 
-	// input and output size
-	
-	Matrix W, gW;
-	Line B, gB;
+	int n, m;
+	Tensor W, B;
 };
 
 

@@ -1,27 +1,26 @@
 #include <Layer.hpp>
-#include <math.h>
+#include <GeneralMath.hpp>
 
-LinearLayer::LinearLayer(int n, int m) {
-	W = Matrix(n, m);
-	gW = Matrix(n, m);
-	B = Line(m);
-	gB = Line(m);
+LinearLayer::LinearLayer(int x, int y) {
+	n = x, m = y;
+	W = Tensor(std::vector<int>{x, y});
+	B = Tensor(std::vector<int>{y});
 }
-Line LinearLayer::forward(Line x) {
-	return x * W + B;
-}
-
-Line LinearLayer::backward(Line x, Line dX) {
-	gB += dX;
-	gW += x.outer_multiply(dX);
-	return dX * W.transpose();
-}
-
-void LinearLayer::zero_gradient() {
+void LinearLayer::randomize_weight() {
 	for (int i = 0; i < n; ++i)
 		for (int j = 0; j < m; ++j)
-			gW[i][j] = 0;
+			W.accessA(i * m + j) = random_float(-1, 1);
 	for (int j = 0; j < m; ++j)
-		gB[j] = 0;
+		B.accessA(j) = random_float(-1, 1);
 }
 
+Tensor LinearLayer::forward(Tensor x) {
+	return x * W + B;
+}
+Tensor LinearLayer::operator () (Tensor x) {
+	return forward(x);
+}
+
+std::vector<Tensor> LinearLayer::get_parameters() {
+	return std::vector<Tensor>{W, B};
+}

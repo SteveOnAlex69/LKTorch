@@ -1,63 +1,111 @@
 #ifndef TENSOR_HPP
 #define TENSOR_HPP
 
-#include <DebugAssist.hpp>
-#include <LinearAlg.hpp>
-#include <Layer.hpp>
+#include <StaticVector.hpp>
+#include <vector>
 
 
 enum TransformType {
-	ADD = 0,
-	SUBTRACT = 1,
-	LINEAR = 2,
-	RELU = 3,
-	SIGMOID = 4
+	NOTHING = 0,
+	ADD = 1,
+	SUBTRACT = 2,
+	MULTIPLY = 3,
+
+
+	RELU = 4,
+	SIGMOID = 5,
 };
 
 // Defining a tensor, which do a shit tons of things
+struct RawTensor {
+public:
+	RawTensor(StaticIntVector dimension);
+	RawTensor(StaticIntVector dimension, std::vector<float> x);
+	RawTensor(StaticIntVector dimension, StaticFloatVector x);
+
+	int get_tensor_size();
+	StaticIntVector get_tensor_dimension();
+
+	int get_reference_count();
+	void increase_reference_count();
+	void decrease_reference_count();
+
+	void set_trans_type(TransformType trans);
+	TransformType get_trans_type() const;
+
+	void add_parent(std::shared_ptr<RawTensor> p);
+	std::vector<std::shared_ptr<RawTensor>> get_parent() const;
+
+	void backward();
+
+	void clear();
+	bool empty();
+
+	std::shared_ptr<StaticFloatVector>& A();
+	std::shared_ptr<StaticFloatVector>& gA();
+	float& accessA(int x);
+	float& accessGA(int x);
+
+	void gradient_descent(float lr);
+	void zero_gradient();
+	void multiply_gradient(float x);
+private:
+	int tensor_size;
+	std::shared_ptr<StaticFloatVector> value, gradient_value;
+	StaticIntVector dimension;
+	int reference_counter;
+	
+	TransformType t_type = NOTHING;
+	std::vector<std::shared_ptr<RawTensor>> parents;
+};
+
+std::shared_ptr<RawTensor> operator + (std::shared_ptr<RawTensor> x, std::shared_ptr<RawTensor> y);
+std::shared_ptr<RawTensor> operator - (std::shared_ptr<RawTensor> x, std::shared_ptr<RawTensor> y);
+std::shared_ptr<RawTensor> operator * (std::shared_ptr<RawTensor> x, std::shared_ptr<RawTensor> y);
+std::shared_ptr<RawTensor> change_dimension (std::shared_ptr<RawTensor> x, StaticIntVector y);
+
+
+std::shared_ptr<RawTensor> reLU (std::shared_ptr<RawTensor> x);
+std::shared_ptr<RawTensor> sigmoid (std::shared_ptr<RawTensor> x);
+
 
 
 struct Tensor {
-public:
-	Tensor(int n);
-	Tensor(Line x);
-	void set_trans_type(TransformType trans);
-	TransformType get_trans_type() const;
-	void set_parent1(std::shared_ptr<Tensor> p);
-	std::shared_ptr<Tensor> get_parent1() const;
-	void set_parent2(std::shared_ptr<Tensor> p);
-	std::shared_ptr<Tensor> get_parent2() const;
+	std::shared_ptr<RawTensor> ts;
+	Tensor(std::shared_ptr<RawTensor> t = nullptr);
+	Tensor(StaticIntVector dimension);
+	Tensor(StaticIntVector dimension, std::vector<float> x);
+	Tensor(StaticIntVector dimension, StaticFloatVector x);
 
-	
-	void set_linear_layer(void* l);
-	void* get_linear_layer() const;
+	int get_tensor_size();
+	StaticIntVector get_tensor_dimension();
 
-	Line getA() const;
+	void backward();
+	void clear();
+	bool empty();
 
-	Tensor forward(LinearLayer& ll);
-	void backward(Line dL);
-private:
-	int n;
-	Line A;
-	
-	TransformType trans_type;
-	std::shared_ptr<Tensor> parent1, parent2;
 
-	void* lilirlaler = nullptr;
+	void gradient_descent(float lr);
+	void zero_gradient();
+	void multiply_gradient(float x);
+
+	float& accessA(int x);
+	float& accessGA(int x);
+
+	std::shared_ptr<StaticFloatVector>& A();
+	std::shared_ptr<StaticFloatVector>& gA();
 };
 
 
-float reLU(float x);
-float DreLU(float x);
+Tensor operator + (Tensor  x, Tensor  y);
+Tensor operator - (Tensor  x, Tensor  y);
+Tensor operator * (Tensor  x, Tensor  y);
+Tensor change_dimension(Tensor x, StaticIntVector y);
 
-float sigmoid(float x);
-float Dsigmoid(float x);
 
+Tensor reLU(Tensor x);
+Tensor sigmoid(Tensor x);
 
-Tensor reLU(const Tensor& x);
-Tensor sigmoid(const Tensor& x);
-
-Tensor operator + (const Tensor& x, const Tensor& y);
-Tensor operator - (const Tensor& x, const Tensor& y);
+std::ostream& operator << (std::ostream& os, Tensor x);
 
 #endif
