@@ -1,14 +1,15 @@
 #include <iostream>
 #include <iomanip>
-#include <Tensor.hpp>
-#include <GeneralMath.hpp>
-#include <Optimizer.hpp>
-#include <Loss.hpp>
-#include <Optimizer.hpp>
-#include <Layer.hpp>
+
+#include <TensorManip/TensorManip.hpp>
+#include <Tensor/Tensor.hpp>
+
+#include <Helper/GeneralMath.hpp>
+#include <Helper/StaticVector.hpp>
 #include <math.h>
 #include <random>
 #include <algorithm>
+#include <functional>
 
 // Now we will try to extrapolate the function f(x, y) = e^-(x^2 + y^2)
 
@@ -26,18 +27,8 @@ float f(float x, float y) { return std::exp(-sqr(x) - sqr(y)); }
 
 std::vector<Dataset> private_test, public_test;
 void prepare_dataset() {
-	
 	for (int i = -20; i <= 20; ++i)
 		for (int j = -20; j <= 20; ++j) {
-			std::vector<float> input{ (float)i / 2, (float)j / 2 };
-			std::vector<float> output{ f(input[0], input[1]) };
-			public_test.push_back(Dataset(input, output));
-		}
-		
-
-
-	for (int i = 0; i <= 0; ++i)
-		for (int j = 0; j <= 0; ++j) {
 			std::vector<float> input{ (float)i / 2, (float)j / 2 };
 			std::vector<float> output{ f(input[0], input[1]) };
 			public_test.push_back(Dataset(input, output));
@@ -72,7 +63,7 @@ std::pair<Tensor, Tensor> load_dataset(std::vector<Dataset>& test, int l, int r)
 	return std::make_pair(input_tensor, output_tensor);
 }
 
-float calculate_loss(std::vector<Dataset>& test) {
+float calculate_loss(std::vector<Dataset>& test, std::function<Tensor(Tensor, Tensor)> Loss = MSELoss) {
 	std::pair<Tensor, Tensor> data = load_dataset(test, 0, test.size());
 
 	Tensor tenso = data.first;
@@ -82,16 +73,16 @@ float calculate_loss(std::vector<Dataset>& test) {
 	tenso = reLU(tenso);
 	tenso = layer3(tenso);
 
-	tenso = sigmoid(tenso);
-	Tensor final_loss = MSELoss(tenso, data.second);
+	tenso = Sigmoid(tenso);
+	Tensor final_loss = Loss(tenso, data.second);
 
-	return final_loss.accessA(0) / test.size();
+	return final_loss.accessA(std::vector<int>{}) / test.size();
 }
 
 void solve() {
-	layer1.randomize_weight();
-	layer2.randomize_weight();
-	layer3.randomize_weight();
+	layer1.randomize_weight_uniform();
+	layer2.randomize_weight_uniform();
+	layer3.randomize_weight_uniform();
 	
 	float lr = 0.01;
 	SGD optimizer(lr);
@@ -114,10 +105,9 @@ void solve() {
 			tenso = layer2(tenso);
 			tenso = reLU(tenso);
 			tenso = layer3(tenso);
-			tenso = sigmoid(tenso);
+			tenso = Sigmoid(tenso);
 
-			tenso = MSELoss(tenso, data.second);
-			tenso.accessGA(0) = (float)1;
+			tenso = MAELoss(tenso, data.second);
 			tenso.backward();
 
 			optimizer.step();
@@ -126,12 +116,20 @@ void solve() {
 		if (std::binary_search(lmao.begin(), lmao.end(), it)) {
 			std::cout << "After " << it << " rounds of training\n";
 			std::cout << "--> Time elapsed: " << clock() - cock << "ms!\n";
-			std::cout << "--> On public test: " << calculate_loss(public_test) << "\n";
-			std::cout << "--> On private test: " << calculate_loss(private_test) << "\n";
+			std::cout << "--> Learning rate: " << lr << "ms!\n";
+
+			std::cout << "--> MSE Loss:\n";
+			std::cout << "----> On public test: " << calculate_loss(public_test) << "\n";
+			std::cout << "----> On private test: " << calculate_loss(private_test) << "\n";
+
+			std::cout << "--> MAE Loss:\n";
+			std::cout << "----> On public test: " << calculate_loss(public_test, MAELoss) << "\n";
+			std::cout << "----> On private test: " << calculate_loss(private_test, MAELoss) << "\n";
 		}
 	}
+}
 
-	
+void debug_zone() {
 }
 
 int main(int argv, char* args[]) {
@@ -140,6 +138,7 @@ int main(int argv, char* args[]) {
 	std::cout << std::fixed << std::setprecision(9);
 
 	prepare_dataset();
+	debug_zone();
 	solve();
 
 	return EXIT_SUCCESS;

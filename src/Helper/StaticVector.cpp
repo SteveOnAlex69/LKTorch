@@ -1,5 +1,5 @@
-#include <StaticVector.hpp>
-#include <DebugAssist.hpp>
+#include <Helper/StaticVector.hpp>
+#include <DebugAssist/DebugAssist.hpp>
 
 
 // CONSTRUCT
@@ -22,7 +22,6 @@ StaticFloatVector::StaticFloatVector(std::vector<float> other) {
 	a = new float[n];
 	for (int i = 0; i < n; ++i) a[i] = other[i];
 }
-
 //DESTRUCT
 StaticFloatVector::~StaticFloatVector() {
 	release();
@@ -51,12 +50,6 @@ int StaticFloatVector::size() const {
 	return n;
 }
 
-float& StaticFloatVector::operator [] (int x) {
-	return *(a + x);
-}
-const float& StaticFloatVector::operator [] (int x) const {
-	return *(a + x);
-}
 
 
 StaticFloatVector& operator += (StaticFloatVector& a, StaticFloatVector b) {
@@ -148,14 +141,6 @@ void StaticIntVector::clear() { release(); }
 int StaticIntVector::size() const {
 	return n;
 }
-
-int& StaticIntVector::operator [] (int x) {
-	return *(a + x);
-}
-const int& StaticIntVector::operator [] (int x) const {
-	return *(a + x);
-}
-
 
 StaticIntVector& operator += (StaticIntVector& a, StaticIntVector b) {
 	if (a.size() != b.size()) throw_error("Mismatched size in static float vector addition");

@@ -25,7 +25,7 @@ add_executable(LKTorch "src/main.cpp")
 target_include_directories(LKTorch PRIVATE
 	${CMAKE_SOURCE_DIR}/include
 )
-target_sources(LKTorch PRIVATE  "src/DebugAssist.cpp"  "src/Tensor.cpp" "src/GeneralMath.cpp" "src/Loss.cpp" "src/Optimizer.cpp" "src/StaticVector.cpp" "src/Layer.cpp")
+target_sources(LKTorch PRIVATE  "src/DebugAssist/DebugAssist.cpp"  "src/Tensor/BaseTensor.cpp" "src/Helper/GeneralMath.cpp" "src/TensorManip/Loss.cpp" "src/TensorManip/Optimizer.cpp" "src/Helper/StaticVector.cpp" "src/TensorManip/Layer.cpp" "src/Tensor/TensorFunction.cpp" "src/Tensor/TensorOperation.cpp" "src/Tensor/TensorInit.cpp")
 
 
 #Inputing the folder for accessing assets

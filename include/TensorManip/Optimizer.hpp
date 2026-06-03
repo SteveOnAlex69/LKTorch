@@ -2,7 +2,7 @@
 #define OPTIMIZER_HPP
 
 #include <vector>
-#include <Tensor.hpp>
+#include <Tensor/Tensor.hpp>
 
 class SGD { // Stochastic Gradient Descent
 public:

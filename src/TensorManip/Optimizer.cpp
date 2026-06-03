@@ -1,4 +1,5 @@
-#include <Optimizer.hpp>
+#include <TensorManip/Optimizer.hpp>
+#include <DebugAssist/DebugAssist.hpp>
 
 
 SGD::SGD(float lr) {

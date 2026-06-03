@@ -1,4 +1,4 @@
-#include <DebugAssist.hpp>
+#include <DebugAssist/DebugAssist.hpp>
 
 void throw_error(std::string s){
 	std::cerr << std::endl;

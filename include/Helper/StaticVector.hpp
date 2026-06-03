@@ -2,7 +2,6 @@
 #define STATICVECTOR_HPP
 
 #include <vector>
-#include <DebugAssist.hpp>]
 #include <iostream>
 
 // adding template is easy, I'll just stick with float for now
@@ -11,16 +10,20 @@ public:
 	StaticFloatVector(int _n = 0);
 	StaticFloatVector(const StaticFloatVector& other);
 	StaticFloatVector(std::vector<float> other);
+
 	~StaticFloatVector();
 
 	int size() const;
 
 
-	float& operator [] (int x);
-	const float& operator [] (int x) const;
+	inline float& operator [] (int x) { return *(a + x); }
+	inline const float& operator [] (int x) const { return *(a + x); }
 	StaticFloatVector& operator = (StaticFloatVector x);
 
 	void clear();
+
+	float* data() { return a; }
+	const float* data() const { return a; }
 private:
 	int n;
 	float* a;
@@ -49,8 +52,8 @@ public:
 	int size() const;
 
 
-	int& operator [] (int x);
-	const int& operator [] (int x) const;
+	inline int& operator [] (int x) { return *(a + x); }
+	inline const int& operator [] (int x) const { return *(a + x); }
 	StaticIntVector& operator = (StaticIntVector x);
 
 	void clear();
