@@ -32,6 +32,12 @@ namespace log_function {
 	float backward(float x) { return 1 / x; }
 }
 
+namespace tanh_function {
+	float forward(float x) { return 2 / (1 + std::exp(-2 * x)) - 1; }
+	float backward(float x) { return 1 - sqr_function::forward(forward(x)); }
+}
+
+
 
 TensorFunction reLU(
 	[&](StaticFloatVector& x) -> StaticFloatVector {
@@ -124,6 +130,22 @@ TensorFunction Log(
 	}
 );
 
+TensorFunction Tanh(
+	[&](StaticFloatVector& x) -> StaticFloatVector {
+		StaticFloatVector ans(x.size());
+		for (int i = 0; i < x.size(); ++i)
+			ans[i] = tanh_function::forward(x[i]);
+		return ans;
+	},
+
+	[&](StaticFloatVector& x) -> StaticFloatVector {
+		StaticFloatVector ans(x.size());
+		for (int i = 0; i < x.size(); ++i)
+			ans[i] = tanh_function::backward(x[i]);
+		return ans;
+	}
+);
+
 
 TensorFunction Max(
 	[&](StaticFloatVector& x) -> StaticFloatVector {
@@ -182,14 +204,15 @@ TensorFunction Min(
 	}
 );
 
+
 Tensor Sum(Tensor x) {
 	int x_size = x.get_tensor_size();
-	Tensor tmp = x.ChangeDimension(std::vector<int> {1, x_size}) * Tensor(std::vector<int>{x_size, 1}, std::vector<float>(x_size, 1));
-	return ChangeDimension(tmp, std::vector<int>(0));
+	Tensor tmp = x.Reshape(std::vector<int> {1, x_size}) * Tensor(std::vector<int>{x_size, 1}, std::vector<float>(x_size, 1));
+	return tmp.Reshape(std::vector<int>(0));
 }
 
 Tensor Flatten(Tensor x) {
-	return x.ChangeDimension(std::vector<int>{x.get_tensor_size()});
+	return x.Reshape(std::vector<int>{x.get_tensor_size()});
 }
 
 Tensor operator * (Tensor x, float y) {
@@ -229,6 +252,14 @@ Tensor operator / (Tensor x, float y) {
 		}
 	);
 	return Division(x);
+}
+
+
+Tensor operator + (Tensor x, float y) {
+	return x + Tensor(std::vector<int>{}, std::vector<float>{y});
+}
+Tensor operator - (Tensor x, float y) {
+	return x - Tensor(std::vector<int>{}, std::vector<float>{y});
 }
 
 Tensor mean(Tensor x) {

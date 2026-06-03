@@ -10,7 +10,9 @@ Tensor Ones(StaticIntVector dimension) {
 	return UniformValue(dimension, 1);
 }
 Tensor UniformValue(StaticIntVector dimension, float val) {
-	return UniformRandom(dimension, val, val);
+	int sz = 1;
+	for (int i = 0; i < dimension.size(); ++i) sz *= dimension[i];
+	return Tensor(dimension, std::vector<float>(sz, val));
 }
 Tensor UniformRandom(StaticIntVector dimension, float l, float r) {
 	int sz = 1;

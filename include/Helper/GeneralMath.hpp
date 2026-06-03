@@ -3,6 +3,9 @@
 
 #include <random>
 
+inline long long max(long long a, long long b) { return (a > b) ? a : b; }
+inline long long min(long long a, long long b) { return (a < b) ? a : b; }
+
 unsigned long long base_random();
 long long random_int(long long l, long long r);
 

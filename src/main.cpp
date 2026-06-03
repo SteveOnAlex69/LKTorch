@@ -43,8 +43,6 @@ void prepare_dataset() {
 	std::shuffle(public_test.begin(), public_test.end(), rd);
 }
 
-LinearLayer layer1(2, 16), layer2(16, 16), layer3(16, 1);
-
 // load up a pair of input and output
 std::pair<Tensor, Tensor> load_dataset(std::vector<Dataset>& test, int l, int r) {
 	r = std::min(r, (int)test.size());
@@ -63,51 +61,62 @@ std::pair<Tensor, Tensor> load_dataset(std::vector<Dataset>& test, int l, int r)
 	return std::make_pair(input_tensor, output_tensor);
 }
 
-float calculate_loss(std::vector<Dataset>& test, std::function<Tensor(Tensor, Tensor)> Loss = MSELoss) {
+float calculate_loss(std::vector<Dataset>& test, Module& your_nn, std::function<Tensor(Tensor, Tensor)> Loss = MSELoss) {
 	std::pair<Tensor, Tensor> data = load_dataset(test, 0, test.size());
 
-	Tensor tenso = data.first;
-	tenso = layer1(tenso);
-	tenso = reLU(tenso);
-	tenso = layer2(tenso);
-	tenso = reLU(tenso);
-	tenso = layer3(tenso);
-
-	tenso = Sigmoid(tenso);
+	Tensor tenso = your_nn(data.first);
 	Tensor final_loss = Loss(tenso, data.second);
 
 	return final_loss.accessA(std::vector<int>{}) / test.size();
 }
 
+class MyNeuralNetwork: public Module {
+public:
+	MyNeuralNetwork() {
+		layer1 = LinearLayer(2, 16);
+		layer2 = LinearLayer(16, 16);
+		layer3 = LinearLayer(16, 1);
+		register_parameter(layer1);
+		register_parameter(layer2);
+		register_parameter(layer3);
+	}
+
+	Tensor forward(Tensor x) override {
+		x = reLU(layer1(x));
+		x = reLU(layer2(x));
+		x = Sigmoid(layer3(x));
+		return x;
+	}
+private:
+	LinearLayer layer1, layer2, layer3;
+};
+
 void solve() {
-	layer1.randomize_weight_uniform();
-	layer2.randomize_weight_uniform();
-	layer3.randomize_weight_uniform();
+	
+	MyNeuralNetwork my_nn;
 	
 	float lr = 0.01;
 	SGD optimizer(lr);
 	
-	for (Tensor i : layer1.get_parameters()) optimizer.add_parameter(i);
-	for (Tensor i : layer2.get_parameters()) optimizer.add_parameter(i);
-	for (Tensor i : layer3.get_parameters()) optimizer.add_parameter(i);
+	for (Tensor i : my_nn.get_parameters()) optimizer.add_parameter(i);
 	
 	clock_t cock = clock();
+	std::pair<Tensor, Tensor> data = load_dataset(public_test, 0, public_test.size());
 	std::vector<int> lmao{ 1, 5, 10, 20, 50, 100, 200, 500, 1000};
 	for (int it = 1; it <= 1000; ++it) {
 		const int BATCH = 100;
+
 		for(int i = 0; i < (int) public_test.size(); i += BATCH){
 			optimizer.zero_gradient();
 
-			std::pair<Tensor, Tensor> data = load_dataset(public_test, i, i + BATCH);
-			Tensor tenso = data.first;
-			tenso = layer1(tenso);
-			tenso = reLU(tenso);
-			tenso = layer2(tenso);
-			tenso = reLU(tenso);
-			tenso = layer3(tenso);
-			tenso = Sigmoid(tenso);
+			Tensor tenso = data.first.Slice(std::vector<int>{i, 0}, 
+				std::vector<int>{(int)min(i + BATCH, public_test.size()) - 1, 1});
 
-			tenso = MAELoss(tenso, data.second);
+
+			tenso = my_nn(tenso);
+
+			tenso = MAELoss(tenso, data.second.Slice(std::vector<int>{i, 0},
+				std::vector<int>{(int)min(i + BATCH, public_test.size()) - 1, 0}));
 			tenso.backward();
 
 			optimizer.step();
@@ -119,17 +128,24 @@ void solve() {
 			std::cout << "--> Learning rate: " << lr << "ms!\n";
 
 			std::cout << "--> MSE Loss:\n";
-			std::cout << "----> On public test: " << calculate_loss(public_test) << "\n";
-			std::cout << "----> On private test: " << calculate_loss(private_test) << "\n";
+			std::cout << "----> On public test: " << calculate_loss(public_test, my_nn) << "\n";
+			std::cout << "----> On private test: " << calculate_loss(private_test, my_nn) << "\n";
 
 			std::cout << "--> MAE Loss:\n";
-			std::cout << "----> On public test: " << calculate_loss(public_test, MAELoss) << "\n";
-			std::cout << "----> On private test: " << calculate_loss(private_test, MAELoss) << "\n";
+			std::cout << "----> On public test: " << calculate_loss(public_test, my_nn, MAELoss) << "\n";
+			std::cout << "----> On private test: " << calculate_loss(private_test, my_nn, MAELoss) << "\n";
 		}
 	}
 }
 
 void debug_zone() {
+	std::pair<Tensor, Tensor> data = load_dataset(public_test, 0, public_test.size());
+
+
+	Tensor tenso = data.first.Slice(std::vector<int>{0, 0},
+		std::vector<int>{(int)min(36, public_test.size()) - 1, 1});
+
+	print_structure(tenso);
 }
 
 int main(int argv, char* args[]) {
@@ -138,8 +154,10 @@ int main(int argv, char* args[]) {
 	std::cout << std::fixed << std::setprecision(9);
 
 	prepare_dataset();
-	debug_zone();
-	solve();
+
+	if (false)
+		debug_zone();
+	else solve();
 
 	return EXIT_SUCCESS;
 }

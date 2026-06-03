@@ -6,5 +6,6 @@
 #include <Tensor/TensorFunction.hpp>
 #include <Tensor/TensorOperation.hpp>
 #include <Tensor/TensorInit.hpp>
+#include <Tensor/DebugTensor.hpp>
 
 #endif
