@@ -122,8 +122,11 @@ void solve() {
 
 			tenso = my_nn(tenso);
 
-			tenso = MAELoss(tenso, data.second.Slice(std::vector<int>{i, 0},
+			
+			tenso = RMSELoss(tenso, data.second.Slice(std::vector<int>{i, 0},
 				std::vector<int>{(int)min(i + BATCH, public_test.size()) - 1, 0}));
+			/*tenso = HuberLoss(tenso, data.second.Slice(std::vector<int>{i, 0},
+				std::vector<int>{(int)min(i + BATCH, public_test.size()) - 1, 0}), 0.5);*/
 			tenso.backward();
 
 			optimizer.step();
@@ -145,10 +148,9 @@ void solve() {
 	}
 }
 
+
+
 void debug_zone() {
-	Tensor data = UniformRandom(std::vector<int>{2, 2}, 0, 1);
-	data = Mean(data);
-	data.backward();
 }
 
 int main(int argv, char* args[]) {
@@ -158,7 +160,7 @@ int main(int argv, char* args[]) {
 
 	prepare_dataset();
 
-	if (false)
+	if (true)
 		debug_zone();
 	else solve();
 

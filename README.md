@@ -50,9 +50,8 @@ I am trying to clone PyTorch. Obviously, my implementation suck ass, but let's t
 	+ Linear layer is a module of W and B (DONE)
 	+ Activation function is a module of the activation function. (DONE)
 - Sequential class. (DONE)
-- Adding the save and load function to a binary file
-- Adding other type of optimizer, like Adam, Simulated Annealling, SGD with momentum, or Softmax.
-- Adding other fun type of loss function.
-- Saving and loading file
+- Adding other fun type of loss function. (DONE)
+- Adding other type of optimizer, like Adam, Simulated Annealling, SGD with momentum.
+- Adding the save and load function to a binary file. 
 - Possibly speeding up the tensor operations
 - Make a python binding

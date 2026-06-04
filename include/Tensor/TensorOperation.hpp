@@ -16,19 +16,18 @@ Tensor Sum(Tensor x);
 Tensor Flatten(Tensor x);
 Tensor Mean(Tensor x);
 Tensor SoftMax(Tensor x);
-
 Tensor Huber(Tensor x, float epsilon);
-
 
 Tensor operator * (Tensor x, float y);
 Tensor operator / (Tensor x, float y);
 Tensor operator + (Tensor x, float y);
 Tensor operator - (Tensor x, float y);
 
-
 Tensor ScalarMultiply(Tensor x, float y);
 Tensor ScalarDivide(Tensor x, float y);
 Tensor ScalarAdd(Tensor x, float y);
 Tensor ScalarSubtract(Tensor x, float y);
+
+Tensor ValueMultiply(Tensor x, Tensor y);
 
 #endif

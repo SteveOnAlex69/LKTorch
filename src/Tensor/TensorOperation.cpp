@@ -4,44 +4,69 @@
 #include <Tensor/DebugTensor.hpp>
 
 
-
-namespace reLU_function {
+namespace reLU_function { // No explosion
 	float forward(float x) { return (x >= 0) ? x : 0; }
 	float backward(float x) { return (x >= 0) ? 1 : 0; }
 }
 
-namespace sigmoid_function {
+namespace sigmoid_function { // No explosion
 	float forward(float x) { return 1.0f / (1 + std::exp(-x)); }
 	float backward(float x) { return forward(x) * forward(1 - x); }
 }
 
-namespace abs_function {
+namespace abs_function { // No explosion
 	float forward(float x) { return (x >= 0) ? x : -x; }
 	float backward(float x) { return (x >= 0) ? 1 : -1; }
 }
 
-namespace sqr_function {
+namespace sqr_function { // No explosion
 	float forward(float x) { return x * x; }
 	float backward(float x) { return x * 2; }
 }
 
-namespace sqrt_function {
-	float forward(float x) { return sqrt(x); }
-	float backward(float x) { return 0.5 / sqrt(x); }
+namespace sqrt_function { // Yes explosion
+	const float EPS = 1e-8;
+	const float SEPS = sqrt(EPS);
+	float forward(float x) { 
+		if (x >= EPS) return sqrt(x); 
+		return SEPS + (x - EPS) * (0.5 / SEPS);
+
+	}
+	float backward(float x) { 
+		if (x >= EPS) return 0.5 / sqrt(x);
+		return 0.5 / SEPS;
+	}
 }
 
-namespace log_function {
-	float forward(float x) { return log(x); }
-	float backward(float x) { return 1 / x; }
+namespace log_function { // Yes explosion
+	const float EPS = 1e-8;
+	const float SEPS = log(EPS);
+	float forward(float x) {
+		if (x >= EPS) return log(x);
+		return SEPS + (x - EPS) * (1 / EPS);
+	}
+	float backward(float x) {
+		if (x >= EPS) return 1 / x;
+		return 1 / EPS;
+	}
 }
 
 namespace tanh_function {
 	float forward(float x) { return 2 / (1 + std::exp(-2 * x)) - 1; }
 	float backward(float x) { return 1 - sqr_function::forward(forward(x)); }
 }
+
 namespace inverse_function {
-	float forward(float x) { return 1 / x; }
-	float backward(float x) { return -1 / (x * x); }
+	const float EPS = 1e-5;
+	const float SEPS = 1 / EPS;
+	float forward(float x) { 
+		if (x >= EPS) return 1 / x; 
+		return SEPS - (x - EPS) * (1 / (EPS * EPS));
+	}
+	float backward(float x) { 
+		if (x >= EPS) return -1 / (x * x);
+		return -1 / (EPS * EPS);
+	}
 }
 
 
@@ -234,8 +259,8 @@ Tensor Tensor::Merge(Tensor y) { return Tensor(merge(ts, y.ts)); }
 
 Tensor Sum(Tensor x) {
 	int x_size = x.get_tensor_size();
-	Tensor tmp = x.Reshape(std::vector<int> {1, x_size}) * Tensor(std::vector<int>{x_size, 1}, std::vector<float>(x_size, 1));
-	return tmp.Reshape(std::vector<int>(0));
+	Tensor tmp = x.Reshape(std::vector<int> {x_size}) * Tensor(std::vector<int>{x_size}, std::vector<float>(x_size, 1));
+	return tmp;
 }
 
 Tensor Flatten(Tensor x) {
@@ -243,20 +268,40 @@ Tensor Flatten(Tensor x) {
 }
 
 Tensor operator * (Tensor x, float y) {
-	StaticIntVector d = x.get_tensor_dimension();
-	StaticIntVector d1(d.size() + 1);
-	for (int i = 0; i < d.size(); ++i) d1[i] = d[i];
-	d1[d.size()] = 1;
-	return x.Reshape(d1) * UniformValue(std::vector<int>{1}, y);
+	return TensorFunction(
+		[=](StaticFloatVector& x) -> StaticFloatVector {
+			StaticFloatVector ans(x.size());
+			for (int i = 0; i < x.size(); ++i)
+				ans[i] = x[i] * y;
+			return ans;
+		},
+
+		[=](StaticFloatVector& x) -> StaticFloatVector {
+			StaticFloatVector ans(x.size());
+			for (int i = 0; i < x.size(); ++i)
+				ans[i] = y;
+			return ans;
+		}
+	)(x);
 }
 
 
 Tensor operator / (Tensor x, float y) {
-	StaticIntVector d = x.get_tensor_dimension();
-	StaticIntVector d1(d.size() + 1);
-	for (int i = 0; i < d.size(); ++i) d1[i] = d[i];
-	d1[d.size()] = 1;
-	return x.Reshape(d1) * UniformValue(std::vector<int>{1}, 1/y);
+	return TensorFunction(
+		[=](StaticFloatVector& x) -> StaticFloatVector {
+			StaticFloatVector ans(x.size());
+			for (int i = 0; i < x.size(); ++i)
+				ans[i] = x[i] / y;
+			return ans;
+		},
+
+		[=](StaticFloatVector& x) -> StaticFloatVector {
+			StaticFloatVector ans(x.size());
+			for (int i = 0; i < x.size(); ++i)
+				ans[i] = (1/y);
+			return ans;
+		}
+	)(x);
 }
 
 
@@ -285,26 +330,47 @@ Tensor SoftMax(Tensor x) {
 
 
 Tensor Huber(Tensor x, float epsilon) {
-	TensorFunction Goober(
-		[&](StaticFloatVector& x) -> StaticFloatVector {
+	return TensorFunction(
+		[=](StaticFloatVector& x) -> StaticFloatVector {
 			StaticFloatVector ans(x.size());
 			for (int i = 0; i < x.size(); ++i) {
-				if (abs(x[i]) >= epsilon) ans[i] = abs(x[i]) * epsilon - 0.5 * sqr_function::forward(x[i]);
+				if (abs(x[i]) >= epsilon) ans[i] = abs(x[i]) * epsilon - 0.5 * epsilon * epsilon;
 				else ans[i] = 0.5 * sqr_function::forward(x[i]);
 			}
 			return ans;
 		},
 
-		[&](StaticFloatVector& x) -> StaticFloatVector {
+		[=](StaticFloatVector& x) -> StaticFloatVector {
 			StaticFloatVector ans(x.size());
 			for (int i = 0; i < x.size(); ++i) {
-				if (abs(x[i]) >= epsilon) 
-					ans[i] = abs_function::backward(x[i]) * epsilon - 0.5 * sqr_function::backward(x[i]);
-				else 
-					ans[i] = 0.5 * sqr_function::backward(x[i]);
+				if (abs(x[i]) >= epsilon)
+					ans[i] = abs_function::backward(x[i]) * epsilon;
+				else
+					ans[i] = x[i];
 			}
 			return ans;
 		}
-	);
-	return Goober(x);
+	)(x);
+}
+
+Tensor ValueMultiply(Tensor x, Tensor y) {
+	if (x.get_tensor_dimension() != y.get_tensor_dimension())
+		throw_error("The two tensor you input didn't have equal dimension (Value Multiply)!");
+	const float* tmp = y.A()->data();
+
+	return TensorFunction(
+		[=](StaticFloatVector& x) -> StaticFloatVector {
+			StaticFloatVector ans(x.size());
+			for (int i = 0; i < x.size(); ++i) 
+				ans[i] = x[i] * tmp[i];
+			return ans;
+		},
+
+		[=](StaticFloatVector& x) -> StaticFloatVector {
+			StaticFloatVector ans(x.size());
+			for (int i = 0; i < x.size(); ++i)
+				ans[i] = tmp[i];
+			return ans;
+		}
+	)(x);
 }
