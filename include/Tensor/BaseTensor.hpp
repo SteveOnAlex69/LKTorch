@@ -38,9 +38,5 @@ struct Tensor {
 Tensor operator + (Tensor x, Tensor y);
 Tensor operator - (Tensor x, Tensor y);
 Tensor operator * (Tensor x, Tensor y);
-Tensor Reshape(Tensor x, StaticIntVector y);
-Tensor Transpose(Tensor x);
-Tensor Slice(Tensor x, StaticIntVector l, StaticIntVector r);
-Tensor Merge(Tensor x, Tensor y);
 
 #endif

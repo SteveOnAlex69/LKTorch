@@ -35,8 +35,3 @@ Tensor Merge(Tensor x, Tensor y) { return Tensor(merge(x.ts, y.ts)); }
 void Tensor::gradient_descent(float lr) { ts->gradient_descent(lr); }
 void Tensor::zero_gradient() { ts->zero_gradient(); }
 void Tensor::multiply_gradient(float x) { ts->multiply_gradient(x); }
-Tensor Tensor::Transpose() {return Tensor(transpose(ts) );}
-Tensor Tensor::Reshape(StaticIntVector y) {return Tensor(reshape(ts, y));}
-Tensor Tensor::Slice(StaticIntVector l, StaticIntVector r) { return Tensor(slice(ts, l, r)); }
-Tensor Tensor::Merge(Tensor y) { return Tensor(merge(ts, y.ts)); }
-

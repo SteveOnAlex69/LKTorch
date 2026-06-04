@@ -2,6 +2,7 @@
 
 typedef std::function<StaticFloatVector(StaticFloatVector&)> VectorFunction;
 
+TensorFunction::TensorFunction() {}
 TensorFunction::TensorFunction(VectorFunction f, VectorFunction dF) : f(f), dF(dF) {}
 std::shared_ptr<RawTensor> TensorFunction::forward(std::shared_ptr<RawTensor> x) {
 	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(x->get_tensor_dimension());

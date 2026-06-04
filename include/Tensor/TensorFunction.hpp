@@ -11,6 +11,7 @@ typedef std::function<StaticFloatVector(StaticFloatVector&)> VectorFunction;
 
 class TensorFunction { 
 public:
+	TensorFunction();
 	TensorFunction(VectorFunction f, VectorFunction dF);
 	std::shared_ptr<RawTensor> forward(std::shared_ptr<RawTensor> x);
 	Tensor forward(Tensor x);

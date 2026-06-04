@@ -27,6 +27,7 @@ float f(float x, float y) { return std::exp(-sqr(x) - sqr(y)); }
 
 std::vector<Dataset> private_test, public_test;
 void prepare_dataset() {
+	
 	for (int i = -20; i <= 20; ++i)
 		for (int j = -20; j <= 20; ++j) {
 			std::vector<float> input{ (float)i / 2, (float)j / 2 };
@@ -67,7 +68,7 @@ float calculate_loss(std::vector<Dataset>& test, Module& your_nn, std::function<
 	Tensor tenso = your_nn(data.first);
 	Tensor final_loss = Loss(tenso, data.second);
 
-	return final_loss.accessA(std::vector<int>{}) / test.size();
+	return final_loss.accessA(std::vector<int>{});
 }
 
 class MyNeuralNetwork: public Module {
@@ -92,26 +93,32 @@ private:
 };
 
 void solve() {
+	//MyNeuralNetwork my_nn;
+	Sequential my_nn = Sequential({
+		std::make_shared<LinearLayer>(2, 16),
+		std::make_shared<reLU_Layer>(),
+		std::make_shared<LinearLayer>(16, 16),
+		std::make_shared<reLU_Layer>(),
+		std::make_shared<LinearLayer>(16, 1),
+		std::make_shared<Sigmoid_Layer>(),
+	});
 	
-	MyNeuralNetwork my_nn;
-	
-	float lr = 0.01;
+	float lr = 1;
 	SGD optimizer(lr);
-	
 	for (Tensor i : my_nn.get_parameters()) optimizer.add_parameter(i);
-	
 	clock_t cock = clock();
 	std::pair<Tensor, Tensor> data = load_dataset(public_test, 0, public_test.size());
 	std::vector<int> lmao{ 1, 5, 10, 20, 50, 100, 200, 500, 1000};
 	for (int it = 1; it <= 1000; ++it) {
 		const int BATCH = 100;
+		optimizer.set_learning_rate(lr);
+		lr *= 0.999;
 
 		for(int i = 0; i < (int) public_test.size(); i += BATCH){
 			optimizer.zero_gradient();
 
 			Tensor tenso = data.first.Slice(std::vector<int>{i, 0}, 
 				std::vector<int>{(int)min(i + BATCH, public_test.size()) - 1, 1});
-
 
 			tenso = my_nn(tenso);
 
@@ -139,13 +146,9 @@ void solve() {
 }
 
 void debug_zone() {
-	std::pair<Tensor, Tensor> data = load_dataset(public_test, 0, public_test.size());
-
-
-	Tensor tenso = data.first.Slice(std::vector<int>{0, 0},
-		std::vector<int>{(int)min(36, public_test.size()) - 1, 1});
-
-	print_structure(tenso);
+	Tensor data = UniformRandom(std::vector<int>{2, 2}, 0, 1);
+	data = Mean(data);
+	data.backward();
 }
 
 int main(int argv, char* args[]) {
@@ -159,5 +162,6 @@ int main(int argv, char* args[]) {
 		debug_zone();
 	else solve();
 
+	std::cout << "Exit success" << std::endl;
 	return EXIT_SUCCESS;
 }

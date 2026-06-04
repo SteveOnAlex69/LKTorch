@@ -3,6 +3,12 @@ project(LKTorch LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# Add compiler flags globally
+#add_compile_options(-fsanitize=address -g)
+
+# Add linker flags globally
+#add_link_options(-fsanitize=address)
+
 # --- FORCE OUTPUT TO "build" FOLDER ---
 
 # 1. Define the output path

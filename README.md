@@ -47,9 +47,11 @@ I am trying to clone PyTorch. Obviously, my implementation suck ass, but let's t
 - Improving the check of the tensor operation before doing stuff. (DONE)
 - Adding the "print structure" method, essential for debugging. (HALF DONE)
 - Module base class (DONE)
+	+ Linear layer is a module of W and B (DONE)
+	+ Activation function is a module of the activation function. (DONE)
+- Sequential class. (DONE)
 - Adding the save and load function to a binary file
 - Adding other type of optimizer, like Adam, Simulated Annealling, SGD with momentum, or Softmax.
-- Sequential class.
 - Adding other fun type of loss function.
 - Saving and loading file
 - Possibly speeding up the tensor operations

@@ -39,7 +39,9 @@ int RawTensor::get_tensor_size() {return tensor_size;}
 StaticIntVector RawTensor::get_tensor_dimension() {return dimension;}
 
 
-RawTensor::~RawTensor() { clear(); }
+RawTensor::~RawTensor() { 
+	clear(); 
+}
 
 void RawTensor::clear() {
 	tensor_size = 0;
@@ -138,9 +140,8 @@ void RawTensor::backward(bool is_root) {
 		}
 	}
 	else if (t_type == MULTIPLY) {
-		const int d1 = parents[0]->get_tensor_dimension()[0], d2 = parents[0]->get_tensor_dimension()[1],
-			d3 = parents[1]->get_tensor_dimension()[1];
-
+		const int d2 = parents[1]->get_tensor_dimension()[0];
+		const int d1 = parents[0]->get_tensor_size() / d2, d3 = parents[1]->get_tensor_size() / d2;
 		const float* __restrict cur_gA = gA()->data();
 		const float* __restrict parent0_A = parents[0]->A()->data();
 		const float* __restrict parent1_A = parents[1]->A()->data();
@@ -257,17 +258,15 @@ std::shared_ptr<RawTensor> operator * (std::shared_ptr<RawTensor> x, std::shared
 	if (dih1.size() == 0 || dih2.size() == 0) throw_error("Cannot perform tensor multiplication with rank-0 tensor");
 	if (dih1[dih1.size() - 1] != dih2[0]) throw_error("Mismatch size when tensor multiplication");
 
-	StaticIntVector dih3(dih1.size() + dih2.size() - 2);
+	StaticIntVector dih3(dih1.size() + dih2.size() - 2);	
 	for (int i = 0; i + 1 < dih1.size(); ++i) dih3[i] = dih1[i];
-	for (int i = 0; i + 1 < dih3.size(); ++i) dih3[dih1.size() + i - 1] = dih2[i+1];
-	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(dih3);
+	for (int i = 0; i + 1 < dih2.size(); ++i) dih3[dih1.size() + i - 1] = dih2[i+1];
 
+	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(dih3);
+	const int d1 = x->get_tensor_size() / dih2[0], d2 = dih2[0], d3 = y->get_tensor_size() / dih2[0];
 	const float* __restrict parent0_A = x->A()->data();
 	const float* __restrict parent1_A = y->A()->data();
 	float* __restrict cur_A = ans->A()->data();
-
-	const int d1 = x->get_tensor_size() / dih2[0], d2 = dih2[0], d3 = y->get_tensor_size() / dih2[0];
-
 	for (int i = 0; i < d1; ++i)
 		for (int k = 0; k < d2; ++k)
 			for (int j = 0; j < d3; ++j)
@@ -277,15 +276,17 @@ std::shared_ptr<RawTensor> operator * (std::shared_ptr<RawTensor> x, std::shared
 	return ans;
 }
 std::shared_ptr<RawTensor> reshape(std::shared_ptr<RawTensor> cur, StaticIntVector y) {
+	StaticIntVector x = cur->get_tensor_dimension();
 	int new_size = 1;
 	for (int i = 0; i < y.size(); ++i) new_size *= y[i];
 	if (new_size != cur->get_tensor_size()) throw_error("Inappropriate tensor size when changing dimension");
 
-	StaticIntVector x = cur->get_tensor_dimension();
 
 	// checking if the two size are equivalent, using two pointers
 	int i = 0, j = 0;
 	while (i < x.size() && j < y.size()) {
+		if (x[i] == 1) {i++;continue;}
+		if (y[j] == 1) {j++;continue;}
 		int prod1 = x[i++], prod2 = y[j++];
 		while (prod1 < prod2 && prod2 % prod1 == 0) prod1 *= x[i++];
 		while (prod1 > prod2 && prod1 % prod2 == 0) prod2 *= y[j++];

@@ -6,6 +6,7 @@
 std::ostream& operator << (std::ostream& os, Tensor x) {
 	StaticIntVector d = x.get_tensor_dimension();
 	StaticFloatVector& A = *(x.A());
+	if (A.size() != x.get_tensor_size()) throw_error("Internal Array Size and Tensor Size Mismatched");
 	for (int i = d.size() - 2; i >= 0; --i) d[i] *= d[i + 1];
 	for (int i = 0; i < x.get_tensor_size(); ++i) {
 		for (int j = 0; j < d.size(); ++j) if (i % d[j] == 0) os << "(";
