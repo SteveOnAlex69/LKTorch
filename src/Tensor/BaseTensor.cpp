@@ -26,11 +26,9 @@ std::shared_ptr<StaticFloatVector>& Tensor::gA() { { return ts->gA(); } }
 Tensor operator + (Tensor  x, Tensor  y) { return Tensor(x.ts + y.ts); }
 Tensor operator - (Tensor  x, Tensor  y) { return Tensor(x.ts - y.ts); }
 Tensor operator * (Tensor  x, Tensor  y) { return Tensor(x.ts * y.ts); }
-Tensor Transpose(Tensor x) { return Tensor(transpose(x.ts)); }
-Tensor Reshape(Tensor x, StaticIntVector y) { return Tensor(reshape(x.ts, y)); }
-Tensor Slice(Tensor x, StaticIntVector l, StaticIntVector r) { return Tensor(slice(x.ts, l, r)); }
-Tensor Merge(Tensor x, Tensor y) { return Tensor(merge(x.ts, y.ts)); }
 
-void Tensor::gradient_descent(float lr) { ts->gradient_descent(lr); }
-void Tensor::zero_gradient() { ts->zero_gradient(); }
-void Tensor::multiply_gradient(float x) { ts->multiply_gradient(x); }
+Tensor Tensor::Transpose() { return Tensor(transpose(ts)); }
+Tensor Tensor::Reshape(StaticIntVector y) { return Tensor(reshape(ts, y)); }
+Tensor Tensor::Slice(StaticIntVector l, StaticIntVector r) { return Tensor(slice(ts, l, r)); }
+Tensor Tensor::Merge(Tensor y) { return Tensor(merge(ts, y.ts)); }
+Tensor Tensor::ValueMultiply(Tensor y) { return Tensor(value_multiply(ts, y.ts)); }

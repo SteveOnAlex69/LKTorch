@@ -6,6 +6,9 @@
 
 #include <Helper/GeneralMath.hpp>
 #include <Helper/StaticVector.hpp>
+
+#include <FileHandling/StateDictSaver.hpp>
+
 #include <math.h>
 #include <random>
 #include <algorithm>
@@ -68,7 +71,7 @@ float calculate_loss(std::vector<Dataset>& test, Module& your_nn, std::function<
 	Tensor tenso = your_nn(data.first);
 	Tensor final_loss = Loss(tenso, data.second);
 
-	return final_loss.accessA(std::vector<int>{});
+	return MeanAll(final_loss).accessA(std::vector<int>{});
 }
 
 class MyNeuralNetwork: public Module {
@@ -102,40 +105,49 @@ void solve() {
 		std::make_shared<LinearLayer>(16, 1),
 		std::make_shared<Sigmoid_Layer>(),
 	});
+
+
+	my_nn.load_state_dict(IOHandle::read(std::string(PROJECT_DIR) + "//asset//tmp.txt"));
+
+
+	std::cout << "--> MSE Loss:\n";
+	std::cout << "----> On public test: " << calculate_loss(public_test, my_nn) << "\n";
+	std::cout << "----> On private test: " << calculate_loss(private_test, my_nn) << "\n";
+
+	std::cout << "--> MAE Loss:\n";
+	std::cout << "----> On public test: " << calculate_loss(public_test, my_nn, MAELoss) << "\n";
+	std::cout << "----> On private test: " << calculate_loss(private_test, my_nn, MAELoss) << "\n";
+	/*
+	float lr = 0.001;
+	Adam optimizer1(lr);
+	optimizer1.add_parameter(my_nn.get_parameters());
+
 	
-	float lr = 1;
-	SGD optimizer(lr);
-	for (Tensor i : my_nn.get_parameters()) optimizer.add_parameter(i);
 	clock_t cock = clock();
 	std::pair<Tensor, Tensor> data = load_dataset(public_test, 0, public_test.size());
-	std::vector<int> lmao{ 1, 5, 10, 20, 50, 100, 200, 500, 1000};
+	std::vector<int> lmao{ 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000};
 	for (int it = 1; it <= 1000; ++it) {
-		const int BATCH = 100;
-		optimizer.set_learning_rate(lr);
-		lr *= 0.999;
-
+		const int BATCH = 101;
+		// This is redundant, but by good design I should still do this
+		optimizer1.zero_gradient();
 		for(int i = 0; i < (int) public_test.size(); i += BATCH){
-			optimizer.zero_gradient();
-
 			Tensor tenso = data.first.Slice(std::vector<int>{i, 0}, 
 				std::vector<int>{(int)min(i + BATCH, public_test.size()) - 1, 1});
 
 			tenso = my_nn(tenso);
-
-			
 			tenso = RMSELoss(tenso, data.second.Slice(std::vector<int>{i, 0},
 				std::vector<int>{(int)min(i + BATCH, public_test.size()) - 1, 0}));
-			/*tenso = HuberLoss(tenso, data.second.Slice(std::vector<int>{i, 0},
-				std::vector<int>{(int)min(i + BATCH, public_test.size()) - 1, 0}), 0.5);*/
+			tenso = MeanAll(tenso);
 			tenso.backward();
 
-			optimizer.step();
+			// This automatically reset the gradient
+			optimizer1.step();
 		}
+		//optimizer.decay_learning_rate();
 
 		if (std::binary_search(lmao.begin(), lmao.end(), it)) {
 			std::cout << "After " << it << " rounds of training\n";
 			std::cout << "--> Time elapsed: " << clock() - cock << "ms!\n";
-			std::cout << "--> Learning rate: " << lr << "ms!\n";
 
 			std::cout << "--> MSE Loss:\n";
 			std::cout << "----> On public test: " << calculate_loss(public_test, my_nn) << "\n";
@@ -146,11 +158,14 @@ void solve() {
 			std::cout << "----> On private test: " << calculate_loss(private_test, my_nn, MAELoss) << "\n";
 		}
 	}
+
+	IOHandle::write(my_nn.get_state_dict(), std::string(PROJECT_DIR) + "//asset//tmp.txt");*/
 }
 
 
 
 void debug_zone() {
+	
 }
 
 int main(int argv, char* args[]) {
@@ -160,7 +175,7 @@ int main(int argv, char* args[]) {
 
 	prepare_dataset();
 
-	if (true)
+	if (false)
 		debug_zone();
 	else solve();
 

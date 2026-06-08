@@ -11,6 +11,26 @@ public:
 
 	Tensor operator () (Tensor x) { return forward(x); }
 	std::vector<Tensor> get_parameters() { return parameters; }
+
+
+	std::vector<StaticFloatVector> get_state_dict() {
+		std::vector<StaticFloatVector> ans;
+		for (auto i : parameters) {
+			StaticFloatVector& cur = *i.A();
+			ans.push_back(cur);
+		}
+		return ans;
+	}
+	void load_state_dict(std::vector<StaticFloatVector> bruh) {
+		int n = bruh.size();
+		if (n != parameters.size()) throw_error("In load state dict: parameter mismatched");
+		for (int i = 0; i < n; ++i) {
+			if (parameters[i].get_tensor_size() != bruh[i].size()) throw_error("In load state dict: parameter mismatched");
+			StaticFloatVector& cur = *parameters[i].A();
+			for (int j = 0; j < bruh[i].size(); ++j)
+				cur[j] = bruh[i][j];
+		}
+	}
 protected:
 	std::vector<Tensor> parameters;
 	void register_parameter(Tensor param) { parameters.push_back(param); }

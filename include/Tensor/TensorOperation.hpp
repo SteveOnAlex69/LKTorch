@@ -11,11 +11,17 @@ Tensor Reshape(Tensor x, StaticIntVector y);
 Tensor Transpose(Tensor x);
 Tensor Slice(Tensor x, StaticIntVector l, StaticIntVector r);
 Tensor Merge(Tensor x, Tensor y);
+Tensor ValueMultiply(Tensor x, Tensor y);
 
+// Only Transform The Innermost Layer
 Tensor Sum(Tensor x);
-Tensor Flatten(Tensor x);
 Tensor Mean(Tensor x);
 Tensor SoftMax(Tensor x);
+
+Tensor SumAll(Tensor x);
+Tensor MeanAll(Tensor x);
+
+Tensor Flatten(Tensor x);
 Tensor Huber(Tensor x, float epsilon);
 
 Tensor operator * (Tensor x, float y);
@@ -27,7 +33,5 @@ Tensor ScalarMultiply(Tensor x, float y);
 Tensor ScalarDivide(Tensor x, float y);
 Tensor ScalarAdd(Tensor x, float y);
 Tensor ScalarSubtract(Tensor x, float y);
-
-Tensor ValueMultiply(Tensor x, Tensor y);
 
 #endif

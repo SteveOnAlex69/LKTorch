@@ -17,10 +17,6 @@ struct Tensor {
 	void clear();
 	bool empty();
 
-	void gradient_descent(float lr);
-	void zero_gradient();
-	void multiply_gradient(float x);
-
 	std::shared_ptr<StaticFloatVector>& A();
 	std::shared_ptr<StaticFloatVector>& gA();
 
@@ -33,6 +29,7 @@ struct Tensor {
 	Tensor Reshape(StaticIntVector y);
 	Tensor Slice(StaticIntVector l, StaticIntVector r);
 	Tensor Merge(Tensor y);
+	Tensor ValueMultiply(Tensor y);
 };
 
 Tensor operator + (Tensor x, Tensor y);

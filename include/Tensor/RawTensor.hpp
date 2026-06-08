@@ -13,10 +13,11 @@ enum TransformType {
 	ADD = 1,
 	SUBTRACT = 2,
 	MULTIPLY = 3,
-	CUSTOM_FUNCTION = 4,
-	TRANSPOSE = 5,
-	SLICE = 6,
-	MERGE = 7
+	VALUE_MULTIPLY = 4,
+	CUSTOM_FUNCTION = 5,
+	TRANSPOSE = 6,
+	SLICE = 7,
+	MERGE = 8
 };
 
 // Defining a tensor, which do a shit tons of things
@@ -53,7 +54,6 @@ public:
 	bool empty();
 
 	// these methods are faster, so you should use.
-	// but use with caution and care, because if the tensor is init without a value, these guys would be null
 	std::shared_ptr<StaticFloatVector>& A();
 	std::shared_ptr<StaticFloatVector>& gA();
 
@@ -61,10 +61,8 @@ public:
 	float& accessA(StaticIntVector x);
 	float& accessGA(StaticIntVector x);
 
-	void gradient_descent(float lr);
-	void zero_gradient();
-	void multiply_gradient(float x);
-
+	void set_name(std::string s);
+	std::string get_name();
 private:
 	int tensor_size;
 	std::shared_ptr<StaticFloatVector> value, gradient_value;
@@ -74,6 +72,8 @@ private:
 	TransformType t_type = NOTHING;
 	std::vector<std::shared_ptr<RawTensor>> parents;
 	std::function<StaticFloatVector(StaticFloatVector&)> dF;
+
+	std::string name;
 };
 
 std::shared_ptr<RawTensor> operator + (std::shared_ptr<RawTensor> x, std::shared_ptr<RawTensor> y);
@@ -81,6 +81,8 @@ std::shared_ptr<RawTensor> operator - (std::shared_ptr<RawTensor> x, std::shared
 
 // This will collapse the middle layer
 std::shared_ptr<RawTensor> operator * (std::shared_ptr<RawTensor> x, std::shared_ptr<RawTensor> y);
+
+std::shared_ptr<RawTensor> value_multiply (std::shared_ptr<RawTensor> x, std::shared_ptr<RawTensor> y);
 std::shared_ptr<RawTensor> transpose(std::shared_ptr<RawTensor> x);
 std::shared_ptr<RawTensor> reshape(std::shared_ptr<RawTensor> x, StaticIntVector y);
 std::shared_ptr<RawTensor> slice(std::shared_ptr<RawTensor> x, StaticIntVector l, StaticIntVector r);

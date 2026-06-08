@@ -154,6 +154,19 @@ void RawTensor::backward(bool is_root) {
 					parent1_gA[y * d3 + z] += cur_gA[x * d3 + z] * parent0_A[x * d2 + y];
 				}
 	}
+	else if (t_type == VALUE_MULTIPLY) {
+		const int x_size = parents[0]->get_tensor_size(), y_size = parents[1]->get_tensor_size();
+		int total_size = get_tensor_size();
+		float* __restrict parent0_gA = parents[0]->gA()->data();
+		float* __restrict parent1_gA = parents[1]->gA()->data();
+		const float* __restrict cur_gA = gA()->data();
+		const float* __restrict parent0_A = parents[0]->A()->data();
+		const float* __restrict parent1_A = parents[1]->A()->data();
+		for (int i = 0; i < total_size; ++i) {
+			parent0_gA[i % x_size] += cur_gA[i] * parent1_A[i % y_size];
+			parent1_gA[i % y_size] += cur_gA[i] * parent0_A[i % x_size];
+		}
+	}
 	else if (t_type == CUSTOM_FUNCTION) {
 		int x_size = get_tensor_size();
 		StaticFloatVector& tmp = dF(*parents[0]->A());
@@ -214,7 +227,7 @@ std::shared_ptr<RawTensor> operator + (std::shared_ptr<RawTensor> x, std::shared
 	int min_size = std::min(dx.size(), dy.size());
 	for (int i = 0; i < min_size; ++i)
 		if (dx[dx.size() - min_size + i] != dy[dy.size() - min_size + i])
-			throw_error("dimension mismatch");
+			throw_error("Tensor addition: dimension mismatch");
 
 	const int x_size = x->get_tensor_size(), y_size = y->get_tensor_size();
 	int max_size = std::max(x_size, y_size);
@@ -222,9 +235,9 @@ std::shared_ptr<RawTensor> operator + (std::shared_ptr<RawTensor> x, std::shared
 	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(max_d);
 
 
-	StaticFloatVector& parent0_A = *x->A();
-	StaticFloatVector& parent1_A = *y->A();
-	StaticFloatVector& cur_A = *ans->A();
+	const float* __restrict parent0_A = x->A()->data();
+	const float* __restrict parent1_A = y->A()->data();
+	float* __restrict cur_A = ans->A()->data();
 	for (int i = 0; i < max_size; ++i)
 		cur_A[i] = parent0_A[i % x_size] + parent1_A[i % y_size];
 
@@ -237,15 +250,17 @@ std::shared_ptr<RawTensor> operator - (std::shared_ptr<RawTensor> x, std::shared
 	int min_size = std::min(dx.size(), dy.size());
 	for (int i = 0; i < min_size; ++i)
 		if (dx[dx.size() - min_size + i] != dy[dy.size() - min_size + i])
-			throw_error("dimension mismatch");
+			throw_error("Tensor subtraction: dimension mismatch");
 
 	const int x_size = x->get_tensor_size(), y_size = y->get_tensor_size();
 	int max_size = std::max(x_size, y_size);
 	StaticIntVector max_d = (dx.size() > dy.size()) ? x->get_tensor_dimension() : y->get_tensor_dimension();
 	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(max_d);
-	StaticFloatVector& parent0_A = *x->A();
-	StaticFloatVector& parent1_A = *y->A();
-	StaticFloatVector& cur_A = *ans->A();
+
+
+	const float* __restrict parent0_A = x->A()->data();
+	const float* __restrict parent1_A = y->A()->data();
+	float* __restrict cur_A = ans->A()->data();
 	for (int i = 0; i < max_size; ++i)
 		cur_A[i] = parent0_A[i % x_size] - parent1_A[i % y_size];
 
@@ -273,6 +288,30 @@ std::shared_ptr<RawTensor> operator * (std::shared_ptr<RawTensor> x, std::shared
 				cur_A[i * d3 + j] += parent0_A[i * d2 + k] * parent1_A[k * d3 + j];
 	ans->add_parent(x);ans->add_parent(y);
 	ans->set_trans_type(MULTIPLY);
+	return ans;
+}
+
+std::shared_ptr<RawTensor> value_multiply(std::shared_ptr<RawTensor> x, std::shared_ptr<RawTensor> y) {
+	StaticIntVector& dx = x->get_tensor_dimension(), dy = y->get_tensor_dimension();
+	int min_size = std::min(dx.size(), dy.size());
+	for (int i = 0; i < min_size; ++i)
+		if (dx[dx.size() - min_size + i] != dy[dy.size() - min_size + i])
+			throw_error("Tensor value multiplication: dimension mismatch");
+
+	const int x_size = x->get_tensor_size(), y_size = y->get_tensor_size();
+	int max_size = std::max(x_size, y_size);
+	StaticIntVector max_d = (dx.size() > dy.size()) ? x->get_tensor_dimension() : y->get_tensor_dimension();
+	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(max_d);
+
+
+	const float* __restrict parent0_A = x->A()->data();
+	const float* __restrict parent1_A = y->A()->data();
+	float* __restrict cur_A = ans->A()->data();
+	for (int i = 0; i < max_size; ++i)
+		cur_A[i] = parent0_A[i % x_size] * parent1_A[i % y_size];
+
+	ans->add_parent(x); ans->add_parent(y);
+	ans->set_trans_type(VALUE_MULTIPLY);
 	return ans;
 }
 std::shared_ptr<RawTensor> reshape(std::shared_ptr<RawTensor> cur, StaticIntVector y) {
@@ -374,6 +413,5 @@ std::shared_ptr<RawTensor> merge(std::shared_ptr<RawTensor> x, std::shared_ptr<R
 	return ans;
 }
 
-void RawTensor::gradient_descent(float lr) {*value -= *gradient_value * lr;}
-void RawTensor::zero_gradient() { multiply_gradient(0); }
-void RawTensor::multiply_gradient(float x) { *gradient_value *= x; }
+void RawTensor::set_name(std::string s) { name = s; }
+std::string RawTensor::get_name() { return name; }

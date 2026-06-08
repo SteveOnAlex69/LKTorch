@@ -252,20 +252,34 @@ TensorFunction Min(
 	}
 );
 
-Tensor Tensor::Transpose() { return Tensor(transpose(ts)); }
-Tensor Tensor::Reshape(StaticIntVector y) { return Tensor(reshape(ts, y)); }
-Tensor Tensor::Slice(StaticIntVector l, StaticIntVector r) { return Tensor(slice(ts, l, r)); }
-Tensor Tensor::Merge(Tensor y) { return Tensor(merge(ts, y.ts)); }
+
+Tensor Transpose(Tensor x) { return x.Transpose();; }
+Tensor Reshape(Tensor x, StaticIntVector y) { return x.Reshape(y); }
+Tensor Slice(Tensor x, StaticIntVector l, StaticIntVector r) { return x.Slice(l, r); }
+Tensor Merge(Tensor x, Tensor y) { return x.Merge(y); }
+Tensor ValueMultiply(Tensor x, Tensor y) { return x.ValueMultiply(y); }
+
 
 Tensor Sum(Tensor x) {
-	int x_size = x.get_tensor_size();
-	Tensor tmp = x.Reshape(std::vector<int> {x_size}) * Tensor(std::vector<int>{x_size}, std::vector<float>(x_size, 1));
+	StaticIntVector dx = x.get_tensor_dimension();
+	if (dx.size() == 0) throw_error("In Sum Function: Cannot perform on rank-0 tensor");
+	Tensor tmp = x * UniformValue(std::vector<int>{dx[dx.size() - 1]}, 1);
+	return tmp;
+}
+Tensor Mean(Tensor x) {
+	StaticIntVector dx = x.get_tensor_dimension();
+	if (dx.size() == 0) throw_error("In Mean Function: Cannot perform on rank-0 tensor");
+	Tensor tmp = x * UniformValue(std::vector<int>{dx[dx.size() - 1]}, (float)1 / dx[dx.size() - 1]);
 	return tmp;
 }
 
 Tensor Flatten(Tensor x) {
 	return x.Reshape(std::vector<int>{x.get_tensor_size()});
 }
+
+
+Tensor SumAll(Tensor x) { return Sum(Flatten(x)); }
+Tensor MeanAll(Tensor x) { return Mean(Flatten(x)); }
 
 Tensor operator * (Tensor x, float y) {
 	return TensorFunction(
@@ -317,15 +331,18 @@ Tensor ScalarDivide(Tensor x, float y) { return x / y; }
 Tensor ScalarAdd(Tensor x, float y) { return x + y; }
 Tensor ScalarSubtract(Tensor x, float y) { return x - y; }
 
-Tensor Mean(Tensor x) {
-	return Sum(x) / float(x.get_tensor_size());
-}
 Tensor SoftMax(Tensor x) {
 	StaticIntVector d = x.get_tensor_dimension();
-	StaticIntVector d1(d.size() + 1);
-	for (int i = 0; i < d.size(); ++i) d1[i] = d[i];
-	d1[d.size()] = 1;
-	return x.Reshape(d1) * Inverse(Sum(x)).Reshape(std::vector<int>{1});
+	if (d.size() == 0) throw_error("In SoftMax Function: Cannot perform on rank-0 tensor");
+
+	Tensor y = Inverse(Sum(x));
+	int x_size = x.get_tensor_size(), d2 = d[d.size() - 1];
+	x = x.Reshape(std::vector<int>{x_size / d2, d2}); y = Flatten(y);
+	x = Transpose(x);
+	x = x.ValueMultiply(y);
+	x = Transpose(x);
+	x = x.Reshape(d);
+	return x;
 }
 
 
@@ -353,24 +370,3 @@ Tensor Huber(Tensor x, float epsilon) {
 	)(x);
 }
 
-Tensor ValueMultiply(Tensor x, Tensor y) {
-	if (x.get_tensor_dimension() != y.get_tensor_dimension())
-		throw_error("The two tensor you input didn't have equal dimension (Value Multiply)!");
-	const float* tmp = y.A()->data();
-
-	return TensorFunction(
-		[=](StaticFloatVector& x) -> StaticFloatVector {
-			StaticFloatVector ans(x.size());
-			for (int i = 0; i < x.size(); ++i) 
-				ans[i] = x[i] * tmp[i];
-			return ans;
-		},
-
-		[=](StaticFloatVector& x) -> StaticFloatVector {
-			StaticFloatVector ans(x.size());
-			for (int i = 0; i < x.size(); ++i)
-				ans[i] = tmp[i];
-			return ans;
-		}
-	)(x);
-}

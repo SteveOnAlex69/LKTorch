@@ -51,7 +51,7 @@ I am trying to clone PyTorch. Obviously, my implementation suck ass, but let's t
 	+ Activation function is a module of the activation function. (DONE)
 - Sequential class. (DONE)
 - Adding other fun type of loss function. (DONE)
-- Adding other type of optimizer, like Adam, Simulated Annealling, SGD with momentum.
-- Adding the save and load function to a binary file. 
-- Possibly speeding up the tensor operations
+- Adding other type of optimizer, like Adam, Simulated Annealling, SGD with momentum. (DONE)
+- Adding the save and load function to a binary file. (HALF ASS DONE)
+- Possibly speeding up the tensor operations. (NAH)
 - Make a python binding
