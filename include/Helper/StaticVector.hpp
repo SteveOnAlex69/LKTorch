@@ -42,6 +42,7 @@ bool operator == (StaticFloatVector a, StaticFloatVector b);
 bool operator != (StaticFloatVector a, StaticFloatVector b);
 
 
+
 class StaticIntVector {
 public:
 	StaticIntVector(int _n = 0);
@@ -78,5 +79,9 @@ bool operator != (StaticIntVector a, StaticIntVector b);
 
 std::ostream& operator << (std::ostream& os, StaticFloatVector v);
 std::ostream& operator << (std::ostream& os, StaticIntVector v);
+
+
+std::vector<float> cast_to_vector(StaticFloatVector v);
+std::vector<int> cast_to_vector(StaticIntVector v);
 
 #endif

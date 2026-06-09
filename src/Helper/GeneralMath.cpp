@@ -2,6 +2,7 @@
 #include <DebugAssist/DebugAssist.hpp>
 #include <random>
 #include <math.h>
+#include <memory>
 
 namespace RandomDevice {
 	std::mt19937_64 rng64(67);

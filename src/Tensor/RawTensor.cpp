@@ -169,7 +169,7 @@ void RawTensor::backward(bool is_root) {
 	}
 	else if (t_type == CUSTOM_FUNCTION) {
 		int x_size = get_tensor_size();
-		StaticFloatVector& tmp = dF(*parents[0]->A());
+		StaticFloatVector tmp = dF(*parents[0]->A());
 		float* __restrict parent0_gA = parents[0]->gA()->data();
 		const float* __restrict cur_gA = gA()->data();
 		for (int i = 0; i < x_size; ++i)
@@ -223,7 +223,7 @@ void RawTensor::backward(bool is_root) {
 
 
 std::shared_ptr<RawTensor> operator + (std::shared_ptr<RawTensor> x, std::shared_ptr<RawTensor> y) {
-	StaticIntVector& dx = x->get_tensor_dimension(), dy = y->get_tensor_dimension();
+	StaticIntVector dx = x->get_tensor_dimension(), dy = y->get_tensor_dimension();
 	int min_size = std::min(dx.size(), dy.size());
 	for (int i = 0; i < min_size; ++i)
 		if (dx[dx.size() - min_size + i] != dy[dy.size() - min_size + i])
@@ -246,7 +246,7 @@ std::shared_ptr<RawTensor> operator + (std::shared_ptr<RawTensor> x, std::shared
 	return ans;
 }
 std::shared_ptr<RawTensor> operator - (std::shared_ptr<RawTensor> x, std::shared_ptr<RawTensor> y) {
-	StaticIntVector& dx = x->get_tensor_dimension(), dy = y->get_tensor_dimension();
+	StaticIntVector dx = x->get_tensor_dimension(), dy = y->get_tensor_dimension();
 	int min_size = std::min(dx.size(), dy.size());
 	for (int i = 0; i < min_size; ++i)
 		if (dx[dx.size() - min_size + i] != dy[dy.size() - min_size + i])
@@ -292,7 +292,7 @@ std::shared_ptr<RawTensor> operator * (std::shared_ptr<RawTensor> x, std::shared
 }
 
 std::shared_ptr<RawTensor> value_multiply(std::shared_ptr<RawTensor> x, std::shared_ptr<RawTensor> y) {
-	StaticIntVector& dx = x->get_tensor_dimension(), dy = y->get_tensor_dimension();
+	StaticIntVector dx = x->get_tensor_dimension(), dy = y->get_tensor_dimension();
 	int min_size = std::min(dx.size(), dy.size());
 	for (int i = 0; i < min_size; ++i)
 		if (dx[dx.size() - min_size + i] != dy[dy.size() - min_size + i])

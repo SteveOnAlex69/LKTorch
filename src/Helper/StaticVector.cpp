@@ -195,3 +195,15 @@ std::ostream& operator << (std::ostream& os, StaticIntVector v) {
 	os << ")";
 	return os;
 }
+
+
+std::vector<float> cast_to_vector(StaticFloatVector v) {
+	std::vector<float> ans(v.size());
+	for (int i = 0; i < v.size(); ++i) ans[i] = v[i];
+	return ans;
+}
+std::vector<int> cast_to_vector(StaticIntVector v) {
+	std::vector<int> ans(v.size());
+	for (int i = 0; i < v.size(); ++i) ans[i] = v[i];
+	return ans;
+}

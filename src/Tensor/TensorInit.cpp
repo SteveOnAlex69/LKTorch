@@ -3,30 +3,30 @@
 #include <random>
 
 
-Tensor Zeros(StaticIntVector dimension) {
+Tensor Zeros(std::vector<int> dimension) {
 	return UniformValue(dimension, 0);
 }
-Tensor Ones(StaticIntVector dimension) {
+Tensor Ones(std::vector<int> dimension) {
 	return UniformValue(dimension, 1);
 }
-Tensor UniformValue(StaticIntVector dimension, float val) {
+Tensor UniformValue(std::vector<int> dimension, float val) {
 	int sz = 1;
 	for (int i = 0; i < dimension.size(); ++i) sz *= dimension[i];
 	return Tensor(dimension, std::vector<float>(sz, val));
 }
-Tensor UniformRandom(StaticIntVector dimension, float l, float r) {
+Tensor UniformRandom(std::vector<int> dimension, float l, float r) {
 	int sz = 1;
 	for (int i = 0; i < dimension.size(); ++i) sz *= dimension[i];
 
-	StaticFloatVector suck(sz);
+	std::vector<float> suck(sz);
 	for (int i = 0; i < sz; ++i) suck[i] = uniform_random_float(l, r);
 	return Tensor(dimension, suck);
 }
-Tensor NormalRandom(StaticIntVector dimension, float mean, float deviation) {
+Tensor NormalRandom(std::vector<int> dimension, float mean, float deviation) {
 	int sz = 1;
 	for (int i = 0; i < dimension.size(); ++i) sz *= dimension[i];
 
-	StaticFloatVector suck(sz);
+	std::vector<float> suck(sz);
 	for (int i = 0; i < sz; ++i) suck[i] = normal_random_float(mean, deviation);
 
 	return Tensor(dimension, suck);

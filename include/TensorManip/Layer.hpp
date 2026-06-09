@@ -78,10 +78,10 @@ public:
 };
 class Reshape_Layer : public Module {
 public:
-	Reshape_Layer(StaticIntVector y): y(y){}
+	Reshape_Layer(std::vector<int> y): y(y){}
 	Tensor forward(Tensor x) override { return Reshape(x, y); }
 private: 
-	StaticIntVector y;
+	std::vector<int> y;
 };
 class Transpose_Layer : public Module {
 public:
@@ -89,10 +89,10 @@ public:
 };
 class Slice_Layer : public Module {
 public:
-	Slice_Layer(StaticIntVector l, StaticIntVector r) : l(l), r(r){}
+	Slice_Layer(std::vector<int> l, std::vector<int> r) : l(l), r(r){}
 	Tensor forward(Tensor x) override { return Slice(x, l, r); }
 private:
-	StaticIntVector l, r;
+	std::vector<int> l, r;
 };
 class Sum_Layer : public Module {
 public:

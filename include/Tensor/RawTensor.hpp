@@ -1,7 +1,7 @@
 #ifndef RAWTENSOR_HPP
 #define RAWTENSOR_HPP
 
-
+#include <memory>
 #include <Helper/StaticVector.hpp>
 #include <vector>
 #include <functional>

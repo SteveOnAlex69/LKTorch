@@ -6,12 +6,11 @@
 struct Tensor {
 	std::shared_ptr<RawTensor> ts;
 	Tensor(std::shared_ptr<RawTensor> t = nullptr);
-	Tensor(StaticIntVector dimension);
-	Tensor(StaticIntVector dimension, std::vector<float> x);
-	Tensor(StaticIntVector dimension, StaticFloatVector x);
+	Tensor(std::vector<int> dimension);
+	Tensor(std::vector<int> dimension, std::vector<float> x);
 
 	int get_tensor_size();
-	StaticIntVector get_tensor_dimension();
+	std::vector<int> get_tensor_dimension();
 
 	void backward(bool is_root = true);
 	void clear();
@@ -20,14 +19,12 @@ struct Tensor {
 	std::shared_ptr<StaticFloatVector>& A();
 	std::shared_ptr<StaticFloatVector>& gA();
 
-	float& accessA(StaticIntVector x) { return ts->accessA(x); }
-	float& accessGA(StaticIntVector x) { return ts->accessGA(x);}
 	float& accessA(std::vector<int> x) { return ts->accessA(x); }
 	float& accessGA(std::vector<int> x) { return ts->accessGA(x); }
 
 	Tensor Transpose();
-	Tensor Reshape(StaticIntVector y);
-	Tensor Slice(StaticIntVector l, StaticIntVector r);
+	Tensor Reshape(std::vector<int> y);
+	Tensor Slice(std::vector<int> l, std::vector<int> r);
 	Tensor Merge(Tensor y);
 	Tensor ValueMultiply(Tensor y);
 };

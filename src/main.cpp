@@ -1,13 +1,7 @@
 #include <iostream>
 #include <iomanip>
 
-#include <TensorManip/TensorManip.hpp>
-#include <Tensor/Tensor.hpp>
-
-#include <Helper/GeneralMath.hpp>
-#include <Helper/StaticVector.hpp>
-
-#include <FileHandling/StateDictSaver.hpp>
+#include <LKTorch.hpp>
 
 #include <math.h>
 #include <random>

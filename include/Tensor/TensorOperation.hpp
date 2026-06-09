@@ -7,9 +7,9 @@
 extern TensorFunction reLU, Sigmoid, Abs, Sqr, Sqrt, Log, Tanh, Inverse, Min, Max;
 
 
-Tensor Reshape(Tensor x, StaticIntVector y);
+Tensor Reshape(Tensor x, std::vector<int> y);
 Tensor Transpose(Tensor x);
-Tensor Slice(Tensor x, StaticIntVector l, StaticIntVector r);
+Tensor Slice(Tensor x, std::vector<int> l, std::vector<int> r);
 Tensor Merge(Tensor x, Tensor y);
 Tensor ValueMultiply(Tensor x, Tensor y);
 

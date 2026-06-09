@@ -2,6 +2,7 @@
 #define GENERALMATH_HPP
 
 #include <random>
+#include <cmath>
 
 inline long long max(long long a, long long b) { return (a > b) ? a : b; }
 inline long long min(long long a, long long b) { return (a < b) ? a : b; }
