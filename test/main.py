@@ -9,6 +9,11 @@ li = lk.LinearLayer(6, 3)
 
 tenso = li.forward(tenso)
 
-tenso = tenso.Reshape([9])
+tenso1 = lk.Sigmoid(tenso)
+tenso2 = tenso
+tenso1 = lk.SumAll(tenso1)
+tenso2 = lk.SumAll(tenso2)
+
+print(tenso1.accessA([]), tenso2.accessA([]))
 
 print("Forward Passs")

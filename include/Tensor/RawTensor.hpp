@@ -15,7 +15,7 @@ enum TransformType {
 	MULTIPLY = 3,
 	VALUE_MULTIPLY = 4,
 	CUSTOM_FUNCTION = 5,
-	TRANSPOSE = 6,
+	CUSTOM_PERMUTE = 6,
 	SLICE = 7,
 	MERGE = 8
 };
@@ -40,10 +40,8 @@ public:
 	void set_trans_type(TransformType trans);
 	TransformType get_trans_type() const;
 
-	void set_start_dimension(StaticIntVector d);
-
-
-	void setDF(std::function<StaticFloatVector(StaticFloatVector&)> dF);
+	void setDF(std::function<std::vector<float>(std::vector<float>)>  dF);
+	void setPermutation(StaticIntVector perm);
 
 	void add_parent(std::shared_ptr<RawTensor> p);
 	std::vector<std::shared_ptr<RawTensor>> get_parent() const;
@@ -66,12 +64,13 @@ public:
 private:
 	int tensor_size;
 	std::shared_ptr<StaticFloatVector> value, gradient_value;
-	StaticIntVector dimension, start_dimension;
+	StaticIntVector dimension;
 	int reference_counter;
 
 	TransformType t_type = NOTHING;
 	std::vector<std::shared_ptr<RawTensor>> parents;
-	std::function<StaticFloatVector(StaticFloatVector&)> dF;
+	std::function<std::vector<float>(std::vector<float>)> dF;
+	StaticIntVector perm;
 
 	std::string name;
 };
@@ -83,9 +82,12 @@ std::shared_ptr<RawTensor> operator - (std::shared_ptr<RawTensor> x, std::shared
 std::shared_ptr<RawTensor> operator * (std::shared_ptr<RawTensor> x, std::shared_ptr<RawTensor> y);
 
 std::shared_ptr<RawTensor> value_multiply (std::shared_ptr<RawTensor> x, std::shared_ptr<RawTensor> y);
-std::shared_ptr<RawTensor> transpose(std::shared_ptr<RawTensor> x);
 std::shared_ptr<RawTensor> reshape(std::shared_ptr<RawTensor> x, StaticIntVector y);
 std::shared_ptr<RawTensor> slice(std::shared_ptr<RawTensor> x, StaticIntVector l, StaticIntVector r);
 std::shared_ptr<RawTensor> merge(std::shared_ptr<RawTensor> x, std::shared_ptr<RawTensor> y);
+
+std::shared_ptr<RawTensor> permute(std::shared_ptr<RawTensor> x, StaticIntVector d, StaticIntVector perm);
+std::shared_ptr<RawTensor> permute_dimension(std::shared_ptr<RawTensor> x, StaticIntVector d);
+std::shared_ptr<RawTensor> transpose(std::shared_ptr<RawTensor> x);
 
 #endif

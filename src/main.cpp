@@ -159,7 +159,9 @@ void solve() {
 
 
 void debug_zone() {
-	
+	Tensor gaming = UniformRandom(std::vector<int>{1, 2, 3}, -1, 1);
+	std::cout << gaming << "\n" << gaming.Reshape(std::vector<int>{6}) << "\n";
+
 }
 
 int main(int argv, char* args[]) {
@@ -169,7 +171,7 @@ int main(int argv, char* args[]) {
 
 	prepare_dataset();
 
-	if (false)
+	if (true)
 		debug_zone();
 	else solve();
 

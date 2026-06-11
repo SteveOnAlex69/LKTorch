@@ -22,6 +22,8 @@ struct Tensor {
 	float& accessA(std::vector<int> x) { return ts->accessA(x); }
 	float& accessGA(std::vector<int> x) { return ts->accessGA(x); }
 
+	Tensor Permute(std::vector<int> new_d, std::vector<int> new_perm);
+	Tensor PermuteDimension(std::vector<int> perm);
 	Tensor Transpose();
 	Tensor Reshape(std::vector<int> y);
 	Tensor Slice(std::vector<int> l, std::vector<int> r);

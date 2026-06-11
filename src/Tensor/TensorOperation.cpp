@@ -73,90 +73,90 @@ namespace inverse_function {
 
 
 TensorFunction reLU(
-	[](StaticFloatVector& x) -> StaticFloatVector {
-		StaticFloatVector ans(x.size());
+	[](std::vector<float> x) -> std::vector<float> {
+		std::vector<float> ans(x.size());
 		for (int i = 0; i < x.size(); ++i)
 			ans[i] = reLU_function::forward(x[i]);
 		return ans;
 	},
 
-	[](StaticFloatVector& x) -> StaticFloatVector {
-		StaticFloatVector ans(x.size());
+	[](std::vector<float> x) -> std::vector<float> {
+		std::vector<float> ans(x.size());
 		for (int i = 0; i < x.size(); ++i)
 			ans[i] = reLU_function::backward(x[i]);
 		return ans;
 	}
 );
 TensorFunction Sigmoid(
-	[](StaticFloatVector& x) -> StaticFloatVector {
-		StaticFloatVector ans(x.size());
+	[](std::vector<float> x) -> std::vector<float> {
+		std::vector<float> ans(x.size());
 		for (int i = 0; i < x.size(); ++i)
 			ans[i] = sigmoid_function::forward(x[i]);
 		return ans;
 	},
 
-	[](StaticFloatVector& x) -> StaticFloatVector {
-		StaticFloatVector ans(x.size());
+	[](std::vector<float> x) -> std::vector<float> {
+		std::vector<float> ans(x.size());
 		for (int i = 0; i < x.size(); ++i)
 			ans[i] = sigmoid_function::backward(x[i]);
 		return ans;
 	}
 );
 TensorFunction Abs(
-	[](StaticFloatVector& x) -> StaticFloatVector {
-		StaticFloatVector ans(x.size());
+	[](std::vector<float> x) -> std::vector<float> {
+		std::vector<float> ans(x.size());
 		for (int i = 0; i < x.size(); ++i)
 			ans[i] = abs_function::forward(x[i]);
 		return ans;
 	},
 
-	[](StaticFloatVector& x) -> StaticFloatVector {
-		StaticFloatVector ans(x.size());
+	[](std::vector<float> x) -> std::vector<float> {
+		std::vector<float> ans(x.size());
 		for (int i = 0; i < x.size(); ++i)
 			ans[i] = abs_function::backward(x[i]);
 		return ans;
 	}
 );
 TensorFunction Sqr(
-	[](StaticFloatVector& x) -> StaticFloatVector {
-		StaticFloatVector ans(x.size());
+	[](std::vector<float> x) -> std::vector<float> {
+		std::vector<float> ans(x.size());
 		for (int i = 0; i < x.size(); ++i)
 			ans[i] = sqr_function::forward(x[i]);
 		return ans;
 	},
 
-	[](StaticFloatVector& x) -> StaticFloatVector {
-		StaticFloatVector ans(x.size());
+	[](std::vector<float> x) -> std::vector<float> {
+		std::vector<float> ans(x.size());
 		for (int i = 0; i < x.size(); ++i)
 			ans[i] = sqr_function::backward(x[i]);
 		return ans;
 	}
 );
 TensorFunction Sqrt(
-	[](StaticFloatVector& x) -> StaticFloatVector {
-		StaticFloatVector ans(x.size());
+	[](std::vector<float> x) -> std::vector<float> {
+		std::vector<float> ans(x.size());
 		for (int i = 0; i < x.size(); ++i)
 			ans[i] = sqrt_function::forward(x[i]);
 		return ans;
 	},
 
-	[](StaticFloatVector& x) -> StaticFloatVector {
-		StaticFloatVector ans(x.size());
+	[](std::vector<float> x) -> std::vector<float> {
+		std::vector<float> ans(x.size());
 		for (int i = 0; i < x.size(); ++i)
 			ans[i] = sqrt_function::backward(x[i]);
 		return ans;
 	}
 );
 TensorFunction Log(
-	[](StaticFloatVector& x) -> StaticFloatVector {
-		StaticFloatVector ans(x.size());
+	[](std::vector<float> x) -> std::vector<float> {
+		std::vector<float> ans(x.size());
 		for (int i = 0; i < x.size(); ++i)
 			ans[i] = log_function::forward(x[i]);
 		return ans;
 	},
 
-	[](StaticFloatVector& x) -> StaticFloatVector {
-		StaticFloatVector ans(x.size());
+	[](std::vector<float> x) -> std::vector<float> {
+		std::vector<float> ans(x.size());
 		for (int i = 0; i < x.size(); ++i)
 			ans[i] = log_function::backward(x[i]);
 		return ans;
@@ -164,15 +164,15 @@ TensorFunction Log(
 );
 
 TensorFunction Tanh(
-	[](StaticFloatVector& x) -> StaticFloatVector {
-		StaticFloatVector ans(x.size());
+	[](std::vector<float> x) -> std::vector<float> {
+		std::vector<float> ans(x.size());
 		for (int i = 0; i < x.size(); ++i)
 			ans[i] = tanh_function::forward(x[i]);
 		return ans;
 	},
 
-	[](StaticFloatVector& x) -> StaticFloatVector {
-		StaticFloatVector ans(x.size());
+	[](std::vector<float> x) -> std::vector<float> {
+		std::vector<float> ans(x.size());
 		for (int i = 0; i < x.size(); ++i)
 			ans[i] = tanh_function::backward(x[i]);
 		return ans;
@@ -181,15 +181,15 @@ TensorFunction Tanh(
 
 
 TensorFunction Inverse(
-	[](StaticFloatVector& x) -> StaticFloatVector {
-		StaticFloatVector ans(x.size());
+	[](std::vector<float> x) -> std::vector<float> {
+		std::vector<float> ans(x.size());
 		for (int i = 0; i < x.size(); ++i)
 			ans[i] = inverse_function::forward(x[i]);
 		return ans;
 	},
 
-	[](StaticFloatVector& x) -> StaticFloatVector {
-		StaticFloatVector ans(x.size());
+	[](std::vector<float> x) -> std::vector<float> {
+		std::vector<float> ans(x.size());
 		for (int i = 0; i < x.size(); ++i)
 			ans[i] = inverse_function::backward(x[i]);
 		return ans;
@@ -197,8 +197,8 @@ TensorFunction Inverse(
 );
 
 TensorFunction Max(
-	[](StaticFloatVector& x) -> StaticFloatVector {
-		StaticFloatVector ans(x.size());
+	[](std::vector<float> x) -> std::vector<float> {
+		std::vector<float> ans(x.size());
 		float max = -1e18;
 		int idx = 0;
 		for (int i = 0; i < x.size(); ++i) 
@@ -210,8 +210,8 @@ TensorFunction Max(
 		return ans;
 	},
 
-	[](StaticFloatVector& x) -> StaticFloatVector {
-		StaticFloatVector ans(x.size());
+	[](std::vector<float> x) -> std::vector<float> {
+		std::vector<float> ans(x.size());
 		float max = -1e18;
 		int idx = 0;
 		for (int i = 0; i < x.size(); ++i)
@@ -226,8 +226,8 @@ TensorFunction Max(
 
 
 TensorFunction Min(
-	[](StaticFloatVector& x) -> StaticFloatVector {
-		StaticFloatVector ans(x.size());
+	[](std::vector<float> x) -> std::vector<float> {
+		std::vector<float> ans(x.size());
 		float min = 1e18;
 		int idx = 0;
 		for (int i = 0; i < x.size(); ++i)
@@ -239,8 +239,8 @@ TensorFunction Min(
 		return ans;
 	},
 
-	[](StaticFloatVector& x) -> StaticFloatVector {
-		StaticFloatVector ans(x.size());
+	[](std::vector<float> x) -> std::vector<float> {
+		std::vector<float> ans(x.size());
 		float min = 1e18;
 		int idx = 0;
 		for (int i = 0; i < x.size(); ++i)
@@ -254,6 +254,8 @@ TensorFunction Min(
 );
 
 
+Tensor Permute(Tensor x, std::vector<int> new_d, std::vector<int> new_p) { return x.Permute(new_d, new_p); }
+Tensor PermuteDimension(Tensor x, std::vector<int> perm) { return x.PermuteDimension(perm); }
 Tensor Transpose(Tensor x) { return x.Transpose();; }
 Tensor Reshape(Tensor x, std::vector<int> y) { return x.Reshape(y); }
 Tensor Slice(Tensor x, std::vector<int> l, std::vector<int> r) { return x.Slice(l, r); }
@@ -282,40 +284,40 @@ Tensor Flatten(Tensor x) {
 Tensor SumAll(Tensor x) { return Sum(Flatten(x)); }
 Tensor MeanAll(Tensor x) { return Mean(Flatten(x)); }
 
+
+
 Tensor operator * (Tensor x, float y) {
 	return TensorFunction(
-		[=](StaticFloatVector& x) -> StaticFloatVector {
-			StaticFloatVector ans(x.size());
+		std::function<std::vector<float>(std::vector<float>)>([=](std::vector<float> x) -> std::vector<float> {
+			std::vector<float> ans(x.size());
 			for (int i = 0; i < x.size(); ++i)
 				ans[i] = x[i] * y;
 			return ans;
-		},
+		}),
 
-		[=](StaticFloatVector& x) -> StaticFloatVector {
-			StaticFloatVector ans(x.size());
+		std::function<std::vector<float>(std::vector<float>)>([=](std::vector<float> x) -> std::vector<float> {
+			std::vector<float> ans(x.size());
 			for (int i = 0; i < x.size(); ++i)
 				ans[i] = y;
 			return ans;
-		}
+		})
 	)(x);
 }
-
-
 Tensor operator / (Tensor x, float y) {
 	return TensorFunction(
-		[=](StaticFloatVector& x) -> StaticFloatVector {
-			StaticFloatVector ans(x.size());
+		std::function<std::vector<float>(std::vector<float>)>([=](std::vector<float> x) -> std::vector<float> {
+			std::vector<float> ans(x.size());
 			for (int i = 0; i < x.size(); ++i)
 				ans[i] = x[i] / y;
 			return ans;
-		},
+			}),
 
-		[=](StaticFloatVector& x) -> StaticFloatVector {
-			StaticFloatVector ans(x.size());
+		std::function<std::vector<float>(std::vector<float>)>([=](std::vector<float> x) -> std::vector<float> {
+			std::vector<float> ans(x.size());
 			for (int i = 0; i < x.size(); ++i)
-				ans[i] = (1/y);
+				ans[i] = 1.0/y;
 			return ans;
-		}
+			})
 	)(x);
 }
 
@@ -349,8 +351,8 @@ Tensor SoftMax(Tensor x) {
 
 Tensor Huber(Tensor x, float epsilon) {
 	return TensorFunction(
-		[=](StaticFloatVector& x) -> StaticFloatVector {
-			StaticFloatVector ans(x.size());
+		[=](std::vector<float> x) -> std::vector<float> {
+			std::vector<float> ans(x.size());
 			for (int i = 0; i < x.size(); ++i) {
 				if (abs(x[i]) >= epsilon) ans[i] = abs(x[i]) * epsilon - 0.5 * epsilon * epsilon;
 				else ans[i] = 0.5 * sqr_function::forward(x[i]);
@@ -358,8 +360,8 @@ Tensor Huber(Tensor x, float epsilon) {
 			return ans;
 		},
 
-		[=](StaticFloatVector& x) -> StaticFloatVector {
-			StaticFloatVector ans(x.size());
+		[=](std::vector<float> x) -> std::vector<float> {
+			std::vector<float> ans(x.size());
 			for (int i = 0; i < x.size(); ++i) {
 				if (abs(x[i]) >= epsilon)
 					ans[i] = abs_function::backward(x[i]) * epsilon;

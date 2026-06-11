@@ -28,6 +28,9 @@ Tensor operator + (Tensor  x, Tensor  y) { return Tensor(x.ts + y.ts); }
 Tensor operator - (Tensor  x, Tensor  y) { return Tensor(x.ts - y.ts); }
 Tensor operator * (Tensor  x, Tensor  y) { return Tensor(x.ts * y.ts); }
 
+
+Tensor Tensor::Permute(std::vector<int> new_d, std::vector<int> new_perm) { return Tensor(permute(ts, new_d, new_perm)); }
+Tensor Tensor::PermuteDimension(std::vector<int> perm) { return Tensor(permute_dimension(ts, perm)); }
 Tensor Tensor::Transpose() { return Tensor(transpose(ts)); }
 Tensor Tensor::Reshape(std::vector<int> y) { return Tensor(reshape(ts, y)); }
 Tensor Tensor::Slice(std::vector<int> l, std::vector<int> r) { return Tensor(slice(ts, l, r)); }

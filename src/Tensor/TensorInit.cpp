@@ -31,3 +31,13 @@ Tensor NormalRandom(std::vector<int> dimension, float mean, float deviation) {
 
 	return Tensor(dimension, suck);
 }
+
+Tensor CustomRandom(std::vector<int> dimension, std::function<float(int)> init_function) {
+	int sz = 1;
+	for (int i = 0; i < dimension.size(); ++i) sz *= dimension[i];
+
+	std::vector<float> suck(sz);
+	for (int i = 0; i < sz; ++i) suck[i] = init_function(i);
+
+	return Tensor(dimension, suck);
+}

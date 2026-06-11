@@ -67,9 +67,8 @@ void RawTensor::decrease_reference_count() {
 void RawTensor::set_trans_type(TransformType trans) { t_type = trans; }
 TransformType RawTensor::get_trans_type() const { return t_type; }
 
-void RawTensor::set_start_dimension(StaticIntVector d) { start_dimension = d; }
-
-void RawTensor::setDF(std::function<StaticFloatVector(StaticFloatVector&)> f) { dF = f; }
+void RawTensor::setDF(std::function<std::vector<float>(std::vector<float>)>  f) { dF = f; }
+void RawTensor::setPermutation(StaticIntVector p) { perm = p; }
 
 void RawTensor::add_parent(std::shared_ptr<RawTensor> p) {
 	p->increase_reference_count();
@@ -169,40 +168,25 @@ void RawTensor::backward(bool is_root) {
 	}
 	else if (t_type == CUSTOM_FUNCTION) {
 		int x_size = get_tensor_size();
-		StaticFloatVector tmp = dF(*parents[0]->A());
+		std::vector<float> tmp = dF(cast_to_vector(*parents[0]->A()));
 		float* __restrict parent0_gA = parents[0]->gA()->data();
 		const float* __restrict cur_gA = gA()->data();
 		for (int i = 0; i < x_size; ++i)
 			parent0_gA[i] += cur_gA[i] * tmp[i];
 	}
-	else if (t_type == TRANSPOSE) {
-		StaticIntVector d = get_tensor_dimension();
-		int d1 = d[0], d2 = d[1];
-
+	else if (t_type == CUSTOM_PERMUTE) {
+		int x_size = get_tensor_size();
 		const float* __restrict cur_gA = gA()->data();
 		float* __restrict parent0_gA = parents[0]->gA()->data();
-		for (int i = 0; i < d1; ++i)
-			for (int j = 0; j < d2; ++j)
-				parent0_gA[j * d1 + i] += cur_gA[i * d2 + j];
+		for (int i = 0; i < x_size; ++i)
+			parent0_gA[i] += cur_gA[i - i % perm.size() + perm[i % perm.size()]];
 	}
 	else if (t_type == SLICE) {
 		const float* __restrict cur_gA = gA()->data();
 		float* __restrict parent0_gA = parents[0]->gA()->data();
-		
-		StaticIntVector l = start_dimension;
-		StaticIntVector d = parents[0]->get_tensor_dimension();
-		StaticIntVector new_d = get_tensor_dimension();
-		int sz = get_tensor_size();
-		for (int i = 0; i < sz; ++i) {
-			int prod1 = 1;
-			int idx = 0, tmp = i;
-			for (int j = new_d.size() - 1; j >= 0; --j) {
-				idx += (tmp % new_d[j] + l[j]) * prod1;
-				tmp /= new_d[j];
-				prod1 *= d[j];
-			}
-			parent0_gA[idx] += cur_gA[i];
-		}
+
+		for (int i = 0; i < (int)perm.size(); ++i)
+			parent0_gA[perm[i]] += cur_gA[i];
 	}
 	else if (t_type == MERGE) {
 		const float* __restrict cur_gA = gA()->data();
@@ -315,14 +299,22 @@ std::shared_ptr<RawTensor> value_multiply(std::shared_ptr<RawTensor> x, std::sha
 	return ans;
 }
 std::shared_ptr<RawTensor> reshape(std::shared_ptr<RawTensor> cur, StaticIntVector y) {
-	StaticIntVector x = cur->get_tensor_dimension();
 	int new_size = 1;
 	for (int i = 0; i < y.size(); ++i) new_size *= y[i];
-	if (new_size != cur->get_tensor_size()) throw_error("Inappropriate tensor size when changing dimension");
+
+	StaticIntVector x = cur->get_tensor_dimension();
+	int tot1 = 1;
+	int idx = -1;
+	for (int i = x.size() - 1; i >= 0; --i) {
+		tot1 *= x[i];
+		if (tot1 == new_size) idx = i;
+	}
+
+	if (idx == -1) throw_error("Invalid size when reshaping");
 
 
 	// checking if the two size are equivalent, using two pointers
-	int i = 0, j = 0;
+	int i = idx, j = 0;
 	while (i < x.size() && j < y.size()) {
 		if (x[i] == 1) {i++;continue;}
 		if (y[j] == 1) {j++;continue;}
@@ -334,26 +326,81 @@ std::shared_ptr<RawTensor> reshape(std::shared_ptr<RawTensor> cur, StaticIntVect
 			throw_error("The structure when reshaping are not similar (you can only either slice the new dimension into parts, or join the old dimensions into a big one)");
 	}
 
-	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(y, cur->A(), cur->gA());
+	StaticIntVector ans_dih(idx + y.size());
+	for (int i = 0; i < idx; ++i) ans_dih[i] = x[i];
+	for (int i = 0; i < y.size(); ++i) ans_dih[i + idx] = y[i];
+
+	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(ans_dih, cur->A(), cur->gA());
 	ans->add_parent(cur);
 	return ans;
 }
-std::shared_ptr<RawTensor> transpose(std::shared_ptr<RawTensor> x) {
-	StaticIntVector d = x->get_tensor_dimension();
-	if (d.size() != 2) throw_error("Transpose called on a tensor with non rank 2");
 
-	const int d1 = d[0], d2 = d[1];
-	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(std::vector<int>{d2, d1});
+std::shared_ptr<RawTensor> permute(std::shared_ptr<RawTensor> x, StaticIntVector d, StaticIntVector perm) {
+	StaticIntVector x_dih = x->get_tensor_dimension();
+
+	int tot1 = 1;
+	int idx = -1;
+	for (int i = x_dih.size() - 1; i >= 0; --i) {
+		tot1 *= x_dih[i];
+		if (tot1 == perm.size()) idx = i;
+	}
+
+	int tot2 = 1;
+	for (int i = 0; i < d.size(); ++i) tot2 *= d[i];
+	if (idx == -1 || tot2 != perm.size()) throw_error("Permute failed, the dimension mismatched");
+
+	StaticIntVector cur_d(d.size() + idx);
+	for (int i = 0; i < idx; ++i) cur_d[i] = x_dih[i];
+	for (int i = 0; i < d.size(); ++i) cur_d[i + idx] = d[i];
+
+	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(cur_d);
 	float* curA = x->A()->data();
 	float* nextA = ans->A()->data();
 
-	for (int i = 0; i < d1; ++i)
-		for (int j = 0; j < d2; ++j)
-			nextA[j * d1 + i] = curA[i * d2 + j];
+	for (int i = 0; i < tot1; ++i)
+		nextA[i - i % perm.size() + perm[i % perm.size()]] = curA[i];
 
 	ans->add_parent(x);
-	ans->set_trans_type(TRANSPOSE);
+	ans->setPermutation(perm);
+	ans->set_trans_type(CUSTOM_PERMUTE);
 	return ans;
+}
+std::shared_ptr<RawTensor> permute_dimension(std::shared_ptr<RawTensor> x, StaticIntVector d_arg) {
+	StaticIntVector x_dih = x->get_tensor_dimension();
+	if (d_arg.size() > x_dih.size()) throw_error("Dimension count mismatched!");
+
+	StaticIntVector d(x_dih.size());
+	for (int i = 0; i < x_dih.size() - d_arg.size(); ++i)
+		d[i] = i;
+	for (int i = 0; i < d_arg.size(); ++i)
+		d[i + (x_dih.size() - d_arg.size())] = d_arg[i] + x_dih.size() - d_arg.size();
+
+	StaticIntVector dih(d.size());
+	for (int i = 0; i < d.size(); ++i) dih[i] = x_dih[d[i]];
+
+	int sz = x->get_tensor_size();
+	StaticIntVector perm(sz);
+	for (int i = 0; i < sz; ++i) {
+		int cur = i;
+		StaticIntVector fuck(x_dih.size());
+		for (int i = x_dih.size() - 1; i >= 0; --i) {
+			fuck[i] = cur % x_dih[i];
+			cur /= x_dih[i];
+		}
+
+		int target = 0;
+		for (int i = 0; i < d.size(); ++i) {
+			target = target * dih[i] + fuck[d[i]];
+		}
+		perm[i] = target;
+	}
+
+	return permute(x, dih, perm);
+}
+std::shared_ptr<RawTensor> transpose(std::shared_ptr<RawTensor> x) {
+	StaticIntVector d = x->get_tensor_dimension();
+	if (d.size() < 2) throw_error("Transpose called on a tensor with rank less than 2");
+	return permute_dimension(x, StaticIntVector({ 1, 0 }));
 }
 std::shared_ptr<RawTensor> slice(std::shared_ptr<RawTensor> x, StaticIntVector l, StaticIntVector r) {
 	StaticIntVector d = x->get_tensor_dimension();
@@ -368,26 +415,28 @@ std::shared_ptr<RawTensor> slice(std::shared_ptr<RawTensor> x, StaticIntVector l
 
 	StaticIntVector new_d = d;
 	for (int i = 0; i < d.size(); ++i) new_d[i] = r[i] - l[i] + 1;
+
 	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(new_d);
+	StaticIntVector perm(std::vector<int>{ 0 });
+	for (int i = 0; i < d.size(); ++i) {
+		StaticIntVector poo(perm.size() * new_d[i]);
+		int idx = 0;
+		for (int j = 0; j < perm.size(); ++j) {
+			for (int k = l[i]; k <= r[i]; ++k)
+				poo[idx++] = perm[j] * d[i] + k;
+		}
+		perm = poo;
+	}
+
 	float* curA = x->A()->data();
 	float* nextA = ans->A()->data();
 
-	int sz = ans->get_tensor_size();
-	for (int i = 0; i < sz; ++i) {
-		int prod1 = 1;
-		int idx = 0, tmp = i;
-		for (int j = new_d.size() - 1; j >= 0; --j) {
-			idx += (tmp % new_d[j] + l[j]) * prod1;
-			tmp /= new_d[j];
-			prod1 *= d[j];
-		}
-		nextA[i] = curA[idx];
-	}
+	for (int i = 0; i < perm.size(); ++i)
+		nextA[i] = curA[perm[i]];
 
 	ans->add_parent(x);
 	ans->set_trans_type(SLICE);
-	ans->set_start_dimension(l);
-
+	ans->setPermutation(perm);
 	return ans;
 }
 std::shared_ptr<RawTensor> merge(std::shared_ptr<RawTensor> x, std::shared_ptr<RawTensor> y) {

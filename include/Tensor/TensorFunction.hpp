@@ -6,7 +6,7 @@
 
 // This is a general class to run the function through the entire tensor
 
-typedef std::function<StaticFloatVector(StaticFloatVector&)> VectorFunction;
+typedef std::function<std::vector<float>(std::vector<float>)> VectorFunction;
 
 
 class TensorFunction { 

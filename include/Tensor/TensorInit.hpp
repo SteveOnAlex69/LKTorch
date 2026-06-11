@@ -8,7 +8,7 @@ Tensor Ones(std::vector<int> dimension);
 Tensor UniformValue(std::vector<int> dimension, float x);
 Tensor UniformRandom(std::vector<int> dimension, float l, float r);
 Tensor NormalRandom(std::vector<int> dimension, float mean, float deviation);
-Tensor CustomRandom(std::vector<int> dimension, std::function<float(float)> init_function);
+Tensor CustomRandom(std::vector<int> dimension, std::function<float(int)> init_function);
 
 
 #endif

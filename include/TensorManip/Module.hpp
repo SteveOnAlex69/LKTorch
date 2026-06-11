@@ -13,15 +13,15 @@ public:
 	std::vector<Tensor> get_parameters() { return parameters; }
 
 
-	std::vector<StaticFloatVector> get_state_dict() {
-		std::vector<StaticFloatVector> ans;
+	std::vector<std::vector<float>> get_state_dict() {
+		std::vector<std::vector<float>> ans;
 		for (auto i : parameters) {
 			StaticFloatVector& cur = *i.A();
-			ans.push_back(cur);
+			ans.push_back(cast_to_vector(cur));
 		}
 		return ans;
 	}
-	void load_state_dict(std::vector<StaticFloatVector> bruh) {
+	void load_state_dict(std::vector<std::vector<float>> bruh) {
 		int n = bruh.size();
 		if (n != parameters.size()) throw_error("In load state dict: parameter mismatched");
 		for (int i = 0; i < n; ++i) {
