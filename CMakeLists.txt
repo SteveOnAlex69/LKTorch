@@ -1,14 +1,20 @@
 cmake_minimum_required(VERSION 3.16)
 project(lktorch LANGUAGES CXX)
+
 set(CMAKE_CXX_STANDARD 17)
 
-include(FetchContent)
-FetchContent_Declare(
-    pybind11
-    GIT_REPOSITORY https://github.com/pybind/pybind11.git
-    GIT_TAG        v3.0.2 # The stable version tag
-)
-FetchContent_MakeAvailable(pybind11)
+option (BUILD_PYTHON "Do you wanna produce Python binding (ON) or debugging in C++ (OFF)?" OFF)
+
+if (BUILD_PYTHON)
+	include(FetchContent)
+	FetchContent_Declare(
+		pybind11
+		GIT_REPOSITORY https://github.com/pybind/pybind11.git
+		GIT_TAG        v3.0.2 # The stable version tag
+	)
+	FetchContent_MakeAvailable(pybind11)
+endif()
+
 
 
 # --- FORCE OUTPUT TO "build" FOLDER ---
@@ -22,23 +28,23 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${OUTPUT_DIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${OUTPUT_DIR})
 
-# For shared libraries (.so / .dll), CMake uses LIBRARY_OUTPUT_DIRECTORY
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_DIR})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG ${OUTPUT_DIR})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${OUTPUT_DIR})
-
+# 3. (Optional) Also put DLLs (.lib files) there if needed
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${OUTPUT_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${OUTPUT_DIR})
 
 #Main execcutable file
-pybind11_add_module(lktorch "src/bindings.cpp")
+if (BUILD_PYTHON)
+	pybind11_add_module(lktorch "src/bindings.cpp")
+else()	
+	add_executable(lktorch "src/main.cpp")
+endif()
 
 target_include_directories(lktorch PRIVATE
 	${CMAKE_SOURCE_DIR}/include
 )
-target_sources(lktorch PRIVATE  
 
+target_sources(lktorch PRIVATE  
 "src/DebugAssist/DebugAssist.cpp"  
 "src/Helper/StaticVector.cpp" "src/Helper/GeneralMath.cpp" 
 
@@ -48,7 +54,14 @@ target_sources(lktorch PRIVATE
 "src/TensorManip/Loss.cpp" "src/TensorManip/Optimizer.cpp" 
 )
 
-# --- FORCE MINGW TO EMBED ITS LIBRARIES ---
+
+if(MSVC)
+    target_compile_options(lktorch PRIVATE /O2 /fp:fast /arch:AVX2)
+else()
+    # For MinGW / GCC / Clang
+    target_compile_options(lktorch PRIVATE -O3 -march=native -ffast-math)
+endif()
+
 if(MINGW)
     target_link_options(lktorch PRIVATE -static -static-libgcc -static-libstdc++)
 endif()

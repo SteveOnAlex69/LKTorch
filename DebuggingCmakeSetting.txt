@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(LKTorch LANGUAGES CXX)
+project(lktorch LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -26,13 +26,13 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG ${OUTPUT_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE ${OUTPUT_DIR})
 
 #Main execcutable file
-add_executable(LKTorch "src/main.cpp")
+add_executable(lktorch "src/main.cpp")
 
-target_include_directories(LKTorch PRIVATE
+target_include_directories(lktorch PRIVATE
 	${CMAKE_SOURCE_DIR}/include
 )
 
-target_sources(LKTorch PRIVATE  
+target_sources(lktorch PRIVATE  
 
 "src/DebugAssist/DebugAssist.cpp"  
 "src/Helper/StaticVector.cpp" "src/Helper/GeneralMath.cpp" 
@@ -44,4 +44,4 @@ target_sources(LKTorch PRIVATE
 )
 
 #Inputing the folder for accessing assets
-target_compile_definitions(LKTorch PRIVATE PROJECT_DIR="${CMAKE_SOURCE_DIR}/")
+target_compile_definitions(lktorch PRIVATE PROJECT_DIR="${CMAKE_SOURCE_DIR}/")

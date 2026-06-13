@@ -402,10 +402,20 @@ std::shared_ptr<RawTensor> transpose(std::shared_ptr<RawTensor> x) {
 	if (d.size() < 2) throw_error("Transpose called on a tensor with rank less than 2");
 	return permute_dimension(x, StaticIntVector({ 1, 0 }));
 }
-std::shared_ptr<RawTensor> slice(std::shared_ptr<RawTensor> x, StaticIntVector l, StaticIntVector r) {
+std::shared_ptr<RawTensor> slice(std::shared_ptr<RawTensor> x, StaticIntVector _l, StaticIntVector _r) {
 	StaticIntVector d = x->get_tensor_dimension();
-	if (d.size() != l.size() || d.size() != r.size())
-		throw_error("Mismatched dimension when slicing!");
+	if (_l.size() != _r.size() || d.size() < _l.size()) throw_error("Mismatched dimension when slicing!");
+	StaticIntVector l(d.size()), r(d.size());
+	for (int i = 0; i < d.size() - _l.size(); ++i) {
+		l[i] = 0;
+		r[i] = d[i] - 1;
+	}
+	for (int i = 0; i < _l.size(); ++i) {
+		l[i + (d.size() - _l.size())] = _l[i];
+		r[i + (d.size() - _l.size())] = _r[i];
+	}
+
+
 	for (int i = 0; i < d.size(); ++i) {
 		if (l[i] > r[i])
 			throw_error("L[i] > R[i] when slicing!");

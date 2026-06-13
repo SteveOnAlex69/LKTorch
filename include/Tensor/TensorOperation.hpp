@@ -36,4 +36,6 @@ Tensor ScalarDivide(Tensor x, float y);
 Tensor ScalarAdd(Tensor x, float y);
 Tensor ScalarSubtract(Tensor x, float y);
 
+Tensor Unfold(Tensor x, int a, int b);
+
 #endif

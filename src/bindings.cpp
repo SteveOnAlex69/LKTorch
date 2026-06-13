@@ -78,7 +78,18 @@ PYBIND11_MODULE(lktorch, m) {
         .def(py::self + float())
         .def(py::self - float())
         .def(py::self * float())
-        .def(py::self / float());
+        .def(py::self / float())
+        
+        .def("__str__", [](const Tensor& t) {
+            std::stringstream ss;
+            ss << t; 
+            return ss.str();
+        })
+        .def("__repr__", [](const Tensor& t) {
+            std::stringstream ss;
+            ss << t; 
+            return ss.str();
+        });
     // --- GLOBAL SCOPE FUNCTIONS ---
 
     
@@ -185,6 +196,10 @@ PYBIND11_MODULE(lktorch, m) {
         .def(py::init<>())
         .def(py::init<int, int>(), py::arg("in_features"), py::arg("out_features"), "Fully Connected linear transformation layer.");
 
+    py::class_<Conv2D, Module, std::shared_ptr<Conv2D>>(m, "Conv2D")
+        .def(py::init<>())
+        .def(py::init<std::vector<int>, std::vector<int>>(), py::arg("in_features"), py::arg("out_features") = std::vector<int>{ 1 }, "Convolutional Layers.");
+
 
 
     // ========================================================================
@@ -218,6 +233,8 @@ PYBIND11_MODULE(lktorch, m) {
 
     py::class_<Slice_Layer, Module, std::shared_ptr<Slice_Layer>>(m, "Slice_Layer")
         .def(py::init<std::vector<int>, std::vector<int>>(), py::arg("start_indices"), py::arg("end_indices"));
+    py::class_<Unfold_Layer, Module, std::shared_ptr<Unfold_Layer>>(m, "Unfold_Layer")
+        .def(py::init<int, int>(), py::arg("height"), py::arg("col"));
 
     // Scalar Transformation Layers
     py::class_<ScalarMultiply_Layer, Module, std::shared_ptr<ScalarMultiply_Layer>>(m, "ScalarMultiply_Layer")
@@ -308,4 +325,11 @@ PYBIND11_MODULE(lktorch, m) {
         // Adam explicitly overrides add_parameter, so we must bind its specific pointers
         .def("add_parameter", static_cast<void (Adam::*)(Tensor)>(&Adam::add_parameter), py::arg("ts"))
         .def("add_parameter", static_cast<void (Adam::*)(std::vector<Tensor>)>(&Adam::add_parameter), py::arg("ts"));
+
+
+    // ========================================================================
+    // 11. File read
+    // ========================================================================
+    m.def("ReadFile", &IOHandle::read, py::arg("path"), "Read from a file.");
+    m.def("WriteFile", &IOHandle::write, py::arg("content"), py::arg("path"), "Write to a file.");
 }

@@ -373,3 +373,12 @@ Tensor Huber(Tensor x, float epsilon) {
 	)(x);
 }
 
+
+Tensor Unfold(Tensor x, int a, int b) {
+	StaticIntVector d = x.get_tensor_dimension();
+	int n = d[d.size() - 2], m = d[d.size() - 1];
+	x = x.Slice(std::vector<int>{0, 0}, std::vector<int>{n - n % a-1, m - m % b-1});
+	x = x.Reshape(std::vector<int>{n / 3, 3, m / 3, 3});
+	x = x.PermuteDimension({0, 2, 1, 3});
+	return x;
+}

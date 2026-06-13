@@ -159,8 +159,13 @@ void solve() {
 
 
 void debug_zone() {
-	Tensor gaming = UniformRandom(std::vector<int>{1, 2, 3}, -1, 1);
-	std::cout << gaming << "\n" << gaming.Reshape(std::vector<int>{6}) << "\n";
+	Tensor gaming = UniformRandom(std::vector<int>{6, 6}, -1, 1);
+	std::cout << gaming << "\n";
+	gaming = Unfold(gaming, 3, 3);
+	std::cout << gaming << "\n";
+
+	Conv2D convolayer({ 3, 3 });
+	std::cout << convolayer(gaming) << "\n";
 
 }
 

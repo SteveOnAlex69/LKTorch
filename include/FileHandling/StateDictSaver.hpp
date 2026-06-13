@@ -35,6 +35,9 @@ namespace IOHandle {
 
 	std::vector<std::vector<float>> read(std::string path) {
 		std::ifstream input(path.c_str());
+		if (!input.is_open()) {
+			throw std::runtime_error("LKTorch IO Error: Could not open file at path: " + path);
+		}
 
 		// first, read the number of parameter;
 		std::string dummy = "";

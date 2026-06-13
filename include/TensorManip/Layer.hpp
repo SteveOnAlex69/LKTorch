@@ -21,6 +21,23 @@ private:
 	Tensor W, B;
 };
 
+class Conv2D : public Module {
+public:
+	Conv2D() { len_in = len_out = 0; }
+	Conv2D(std::vector<int> input, std::vector<int> output = std::vector<int>{ 1 }) {
+		len_in = len_out = 1;
+		for (int i : input) len_in *= i;
+		for (int i : output) len_out *= i;
+		li = LinearLayer(len_in, len_out);
+		register_parameter(li);
+	}
+	Tensor forward(Tensor x) override { return li(x.Reshape(std::vector<int>{len_in})).Reshape(output); }
+private:
+	int len_in, len_out;
+	std::vector<int> output;
+	LinearLayer li;
+};
+
 class Functional_Layer : public Module {
 public:
 	Functional_Layer(TensorFunction f) : f(f) {}
@@ -137,6 +154,13 @@ public:
 	Tensor forward(Tensor x) override { return ScalarSubtract(x, y); }
 private:
 	float y;
+};
+class Unfold_Layer : public Module {
+public:
+	Unfold_Layer(int a, int b) : a(a), b(b) {}
+	Tensor forward(Tensor x) override { return Unfold(x, a, b); }
+private:
+	int a, b;
 };
 
 #endif

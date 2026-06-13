@@ -48,6 +48,13 @@ target_sources(lktorch PRIVATE
 "src/TensorManip/Loss.cpp" "src/TensorManip/Optimizer.cpp" 
 )
 
+if(MSVC)
+    target_compile_options(lktorch PRIVATE /O2 /fp:fast /arch:AVX2)
+else()
+    # For MinGW / GCC / Clang
+    target_compile_options(lktorch PRIVATE -O3 -march=native -ffast-math)
+endif()
+
 # --- FORCE MINGW TO EMBED ITS LIBRARIES ---
 if(MINGW)
     target_link_options(lktorch PRIVATE -static -static-libgcc -static-libstdc++)
