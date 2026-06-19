@@ -9,7 +9,7 @@ public:
 	Sequential() {}
 	Sequential(std::vector<std::shared_ptr<Module>> a) {
 		value = a;
-		for (auto i : value) register_parameter(*i);
+		for (auto i : value) RegisterParameter(*i);
 	}
 	Tensor forward(Tensor x) override { 
 		for (auto i : value) {

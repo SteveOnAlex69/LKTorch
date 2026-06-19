@@ -6,19 +6,23 @@ Tensor::Tensor(std::shared_ptr<RawTensor> t) { ts = t; }
 Tensor::Tensor(std::vector<int> d) { ts = std::make_shared<RawTensor>(d); }
 Tensor::Tensor(std::vector<int> d, std::vector<float> x) { ts = std::make_shared<RawTensor>(d, x);}
 
-int Tensor::get_tensor_size() {	return ts->get_tensor_size(); }
-std::vector<int> Tensor::get_tensor_dimension() {
+int Tensor::size() {	return ts->get_tensor_size(); }
+std::vector<int> Tensor::dimension() {
 	return cast_to_vector(ts->get_tensor_dimension());
 }
 
 void Tensor::backward(bool is_root) {
-	if (ts == nullptr) throw_error("You are back propogating on an empty Tensor");
+	if (backprop_activated() == false){
+		std::cout << "Warning: Back propogation is not enabled, this will do nothing!";
+		return;
+	}
+	if (ts == nullptr || ts->empty()) throw_error("You are back propogating on an empty Tensor");
 	ts->backward(is_root);
 	if (ts->empty()) ts = nullptr;
 }
 
 void Tensor::clear() {ts = nullptr;}
-bool Tensor::empty() { return ts == nullptr; }
+bool Tensor::empty() { return ts == nullptr || ts->empty(); }
 
 
 std::shared_ptr<StaticFloatVector>& Tensor::A() { return ts->A(); }

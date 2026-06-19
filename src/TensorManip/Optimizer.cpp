@@ -79,7 +79,7 @@ AdaGrad::AdaGrad(float lr) {
 }
 void AdaGrad::add_parameter(Tensor ts) { 
 	parameters.push_back(ts); 
-	G.push_back(std::make_shared<StaticFloatVector>(ts.get_tensor_size()));
+	G.push_back(std::make_shared<StaticFloatVector>(ts.size()));
 }
 void AdaGrad::add_parameter(std::vector<Tensor> ts) {
 	for (Tensor i : ts)
@@ -128,8 +128,8 @@ Adam::Adam(float lr, float gl, float dc) {
 }
 void Adam::add_parameter(Tensor ts) {
 	parameters.push_back(ts);
-	G.push_back(std::make_shared<StaticFloatVector>(ts.get_tensor_size()));
-	V.push_back(std::make_shared<StaticFloatVector>(ts.get_tensor_size()));
+	G.push_back(std::make_shared<StaticFloatVector>(ts.size()));
+	V.push_back(std::make_shared<StaticFloatVector>(ts.size()));
 }
 void Adam::add_parameter(std::vector<Tensor> ts) {
 	for (Tensor i : ts)

@@ -3,12 +3,13 @@
 #include <Tensor/RawTensor.hpp>
 
 
-RawTensor::RawTensor(StaticIntVector d) {
+RawTensor::RawTensor(StaticIntVector d, bool nograd) {
 	dimension = d;
 	tensor_size = 1;
 	for (int i = 0; i < dimension.size(); ++i) tensor_size *= dimension[i];
 	A() = std::make_shared<StaticFloatVector>(tensor_size);
-	gA() = std::make_shared<StaticFloatVector>(tensor_size);
+	if (nograd) gA() = nullptr;
+	else gA() = std::make_shared<StaticFloatVector>(tensor_size);
 	reference_counter = 0;
 	t_type = NOTHING;
 }
@@ -24,23 +25,27 @@ RawTensor::RawTensor(StaticIntVector d, std::shared_ptr<StaticFloatVector> preA,
 }
 
 
-RawTensor::RawTensor(StaticIntVector d, StaticFloatVector x) {
+RawTensor::RawTensor(StaticIntVector d, StaticFloatVector x, bool nograd) {
 	dimension = d;
 	tensor_size = 1;
 	for (int i = 0; i < dimension.size(); ++i) tensor_size *= dimension[i];
 
-	A() = std::make_shared<StaticFloatVector>(x); gA() = std::make_shared<StaticFloatVector>(tensor_size);
+	A() = std::make_shared<StaticFloatVector>(x); 
+	if (nograd) gA() = nullptr;
+	else gA() = std::make_shared<StaticFloatVector>(tensor_size);
 	reference_counter = 0;
 	t_type = NOTHING;
 }
 
-RawTensor::RawTensor(StaticIntVector d, std::vector<float> x) : RawTensor(d, StaticFloatVector(x)) {}
+RawTensor::RawTensor(StaticIntVector d, std::vector<float> x, bool nograd) : RawTensor(d, StaticFloatVector(x), nograd) {}
 int RawTensor::get_tensor_size() {return tensor_size;}
 StaticIntVector RawTensor::get_tensor_dimension() {return dimension;}
 
 
 RawTensor::~RawTensor() { 
-	clear(); 
+	if (reference_counter) throw_error("Tensor destroyed while still having reference counter");
+	if (empty()) clear();
+	else backward(false);
 }
 
 void RawTensor::clear() {
@@ -67,8 +72,8 @@ void RawTensor::decrease_reference_count() {
 void RawTensor::set_trans_type(TransformType trans) { t_type = trans; }
 TransformType RawTensor::get_trans_type() const { return t_type; }
 
-void RawTensor::setDF(std::function<std::vector<float>(std::vector<float>)>  f) { dF = f; }
-void RawTensor::setPermutation(StaticIntVector p) { perm = p; }
+void RawTensor::set_df(std::function<std::vector<float>(std::vector<float>)>  f) { dF = f; }
+void RawTensor::set_permutation(StaticIntVector p) { perm = p; }
 
 void RawTensor::add_parent(std::shared_ptr<RawTensor> p) {
 	p->increase_reference_count();
@@ -83,7 +88,7 @@ std::shared_ptr<StaticFloatVector>& RawTensor::A() { return value; }
 std::shared_ptr<StaticFloatVector>& RawTensor::gA() { return gradient_value; }
 
 
-float& RawTensor::accessA(StaticIntVector x) {
+float& RawTensor::access_A(StaticIntVector x) {
 	if (x.size() != dimension.size()) throw_error("Dimension mismatched when accessing A of tensor");
 	int idx = 0, prod = 1;
 	for (int j = dimension.size() - 1; j >= 0; --j) {
@@ -92,7 +97,7 @@ float& RawTensor::accessA(StaticIntVector x) {
 	}
 	return (*A())[idx];
 }
-float& RawTensor::accessGA(StaticIntVector x) {
+float& RawTensor::access_GA(StaticIntVector x) {
 	if (x.size() != dimension.size()) throw_error("Dimension mismatched when accessing gA of tensor");
 	int idx = 0, prod = 1;
 	for (int j = dimension.size() - 1; j >= 0; --j) {
@@ -105,6 +110,9 @@ float& RawTensor::accessGA(StaticIntVector x) {
 void RawTensor::backward(bool is_root) {
 	if (reference_counter) return;
 
+	if (gA() == nullptr) 
+		gA() = std::make_shared<StaticFloatVector>(get_tensor_size());
+
 	StaticFloatVector& cur_gA = *gA();
 	if (is_root)
 		for (int j = 0; j < cur_gA.size(); ++j)
@@ -113,7 +121,18 @@ void RawTensor::backward(bool is_root) {
 	for (auto i : parents) i->decrease_reference_count();
 	if (parents.empty()) return;
 
+	for (auto i : parents) {
+		if (i -> gA() == nullptr)
+			i->gA() = std::make_shared<StaticFloatVector>(i->get_tensor_size());
+	}
 	if (t_type == NOTHING) {
+		int total_size = get_tensor_size();
+
+		float* __restrict parent0_gA = parents[0]->gA()->data();
+		const float* __restrict cur_gA = gA()->data();
+		for (int i = 0; i < total_size; ++i) {
+			parent0_gA[i] += cur_gA[i];
+		}
 	}
 	else if (t_type == ADD) {
 		const int x_size = parents[0]->get_tensor_size(), y_size = parents[1]->get_tensor_size();
@@ -199,8 +218,11 @@ void RawTensor::backward(bool is_root) {
 	}
 	else throw_error("unknown transition type");
 
-	for (auto i : parents)
-		i->backward();
+	while (parents.size()) {
+		if (parents.back().use_count() == 1) 
+			parents.back()->backward();
+		parents.pop_back();
+	}
 
 	clear();
 }
@@ -216,7 +238,7 @@ std::shared_ptr<RawTensor> operator + (std::shared_ptr<RawTensor> x, std::shared
 	const int x_size = x->get_tensor_size(), y_size = y->get_tensor_size();
 	int max_size = std::max(x_size, y_size);
 	StaticIntVector max_d = (dx.size() > dy.size()) ? x->get_tensor_dimension() : y->get_tensor_dimension();
-	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(max_d);
+	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(max_d, true);
 
 
 	const float* __restrict parent0_A = x->A()->data();
@@ -239,7 +261,7 @@ std::shared_ptr<RawTensor> operator - (std::shared_ptr<RawTensor> x, std::shared
 	const int x_size = x->get_tensor_size(), y_size = y->get_tensor_size();
 	int max_size = std::max(x_size, y_size);
 	StaticIntVector max_d = (dx.size() > dy.size()) ? x->get_tensor_dimension() : y->get_tensor_dimension();
-	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(max_d);
+	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(max_d, true);
 
 
 	const float* __restrict parent0_A = x->A()->data();
@@ -261,7 +283,7 @@ std::shared_ptr<RawTensor> operator * (std::shared_ptr<RawTensor> x, std::shared
 	for (int i = 0; i + 1 < dih1.size(); ++i) dih3[i] = dih1[i];
 	for (int i = 0; i + 1 < dih2.size(); ++i) dih3[dih1.size() + i - 1] = dih2[i+1];
 
-	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(dih3);
+	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(dih3, true);
 	const int d1 = x->get_tensor_size() / dih2[0], d2 = dih2[0], d3 = y->get_tensor_size() / dih2[0];
 	const float* __restrict parent0_A = x->A()->data();
 	const float* __restrict parent1_A = y->A()->data();
@@ -285,7 +307,7 @@ std::shared_ptr<RawTensor> value_multiply(std::shared_ptr<RawTensor> x, std::sha
 	const int x_size = x->get_tensor_size(), y_size = y->get_tensor_size();
 	int max_size = std::max(x_size, y_size);
 	StaticIntVector max_d = (dx.size() > dy.size()) ? x->get_tensor_dimension() : y->get_tensor_dimension();
-	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(max_d);
+	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(max_d, true);
 
 
 	const float* __restrict parent0_A = x->A()->data();
@@ -330,7 +352,7 @@ std::shared_ptr<RawTensor> reshape(std::shared_ptr<RawTensor> cur, StaticIntVect
 	for (int i = 0; i < idx; ++i) ans_dih[i] = x[i];
 	for (int i = 0; i < y.size(); ++i) ans_dih[i + idx] = y[i];
 
-	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(ans_dih, cur->A(), cur->gA());
+	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(ans_dih, cur->A(), nullptr);
 	ans->add_parent(cur);
 	return ans;
 }
@@ -353,7 +375,7 @@ std::shared_ptr<RawTensor> permute(std::shared_ptr<RawTensor> x, StaticIntVector
 	for (int i = 0; i < idx; ++i) cur_d[i] = x_dih[i];
 	for (int i = 0; i < d.size(); ++i) cur_d[i + idx] = d[i];
 
-	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(cur_d);
+	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(cur_d, true);
 	float* curA = x->A()->data();
 	float* nextA = ans->A()->data();
 
@@ -361,7 +383,7 @@ std::shared_ptr<RawTensor> permute(std::shared_ptr<RawTensor> x, StaticIntVector
 		nextA[i - i % perm.size() + perm[i % perm.size()]] = curA[i];
 
 	ans->add_parent(x);
-	ans->setPermutation(perm);
+	ans->set_permutation(perm);
 	ans->set_trans_type(CUSTOM_PERMUTE);
 	return ans;
 }
@@ -426,7 +448,7 @@ std::shared_ptr<RawTensor> slice(std::shared_ptr<RawTensor> x, StaticIntVector _
 	StaticIntVector new_d = d;
 	for (int i = 0; i < d.size(); ++i) new_d[i] = r[i] - l[i] + 1;
 
-	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(new_d);
+	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(new_d, true);
 	StaticIntVector perm(std::vector<int>{ 0 });
 	for (int i = 0; i < d.size(); ++i) {
 		StaticIntVector poo(perm.size() * new_d[i]);
@@ -446,7 +468,7 @@ std::shared_ptr<RawTensor> slice(std::shared_ptr<RawTensor> x, StaticIntVector _
 
 	ans->add_parent(x);
 	ans->set_trans_type(SLICE);
-	ans->setPermutation(perm);
+	ans->set_permutation(perm);
 	return ans;
 }
 std::shared_ptr<RawTensor> merge(std::shared_ptr<RawTensor> x, std::shared_ptr<RawTensor> y) {
@@ -457,7 +479,7 @@ std::shared_ptr<RawTensor> merge(std::shared_ptr<RawTensor> x, std::shared_ptr<R
 
 	StaticIntVector d = d1;
 	d[0] += d2[0];
-	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(d);
+	std::shared_ptr<RawTensor> ans = std::make_shared<RawTensor>(d, true);
 	float* xA = x->A()->data();	
 	float* yA = y->A()->data();
 	float* nextA = ans->A()->data();

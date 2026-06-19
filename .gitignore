@@ -369,3 +369,8 @@ FodyWeavers.xsd
 !SFML/bin/*.dll
 !SFML/lib/
 !SFML/lib/*.lib
+
+*.csv
+*.cache
+*.pyd 
+*.pyi

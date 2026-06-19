@@ -5,6 +5,7 @@
 #include <Helper/StaticVector.hpp>
 #include <vector>
 #include <functional>
+#include <Tensor/SingletonTensor.hpp>
 
 
 enum TransformType {
@@ -23,10 +24,10 @@ enum TransformType {
 // Defining a tensor, which do a shit tons of things
 struct RawTensor {
 public:
-	RawTensor(StaticIntVector dimension);
+	RawTensor(StaticIntVector dimension, bool nograd = false);
 	RawTensor(StaticIntVector dimension, std::shared_ptr<StaticFloatVector> preA, std::shared_ptr<StaticFloatVector> pregA);
-	RawTensor(StaticIntVector dimension, std::vector<float> x);
-	RawTensor(StaticIntVector dimension, StaticFloatVector x);
+	RawTensor(StaticIntVector dimension, std::vector<float> x, bool nograd = false);
+	RawTensor(StaticIntVector dimension, StaticFloatVector x, bool nograd = false);
 
 	~RawTensor();
 
@@ -40,8 +41,8 @@ public:
 	void set_trans_type(TransformType trans);
 	TransformType get_trans_type() const;
 
-	void setDF(std::function<std::vector<float>(std::vector<float>)>  dF);
-	void setPermutation(StaticIntVector perm);
+	void set_df(std::function<std::vector<float>(std::vector<float>)>  dF);
+	void set_permutation(StaticIntVector perm);
 
 	void add_parent(std::shared_ptr<RawTensor> p);
 	std::vector<std::shared_ptr<RawTensor>> get_parent() const;
@@ -56,8 +57,8 @@ public:
 	std::shared_ptr<StaticFloatVector>& gA();
 
 	// disclaimer: these two methods are slow. It's best to just fetch the entire array A() or gA()
-	float& accessA(StaticIntVector x);
-	float& accessGA(StaticIntVector x);
+	float& access_A(StaticIntVector x);
+	float& access_GA(StaticIntVector x);
 
 	void set_name(std::string s);
 	std::string get_name();

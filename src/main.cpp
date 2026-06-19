@@ -12,161 +12,81 @@
 
 std::mt19937_64 rd(69);
 
-struct Dataset {
-	std::vector<float> input;
-	std::vector<float> output;
 
-	Dataset();
-	Dataset(std::vector<float> i, std::vector<float> o) : input(i), output(o) {}
-};
+Tensor join_info(Tensor public_state, Tensor hidden_state) {
+	std::vector<int> dim = public_state.dimension();
+	int sz = dim.size();
 
-float f(float x, float y) { return std::exp(-sqr(x) - sqr(y)); }
-
-std::vector<Dataset> private_test, public_test;
-void prepare_dataset() {
-	
-	for (int i = -20; i <= 20; ++i)
-		for (int j = -20; j <= 20; ++j) {
-			std::vector<float> input{ (float)i / 2, (float)j / 2 };
-			std::vector<float> output{ f(input[0], input[1]) };
-			public_test.push_back(Dataset(input, output));
-		}
-	for (int i = -100; i <= 100; ++i)
-		for (int j = -100; j <= 100; ++j) {
-			std::vector<float> input{ (float)i / 10, (float)j / 10 };
-			std::vector<float> output{ f(input[0], input[1]) };
-			private_test.push_back(Dataset(input, output));
-		}
-
-	std::shuffle(public_test.begin(), public_test.end(), rd);
-}
-
-// load up a pair of input and output
-std::pair<Tensor, Tensor> load_dataset(std::vector<Dataset>& test, int l, int r) {
-	r = std::min(r, (int)test.size());
-	std::vector<float> input, output;
-	int input_dimension = -1, output_dimension = -1, test_count = 0;
-	for (int i = l; i < r; ++i) {
-		Dataset cur = test[i];
-		input_dimension = cur.input.size();
-		output_dimension = cur.output.size();
-		test_count++;
-		for (float j : cur.input) input.push_back(j);
-		for (float j : cur.output) output.push_back(j);
-	}
-	Tensor input_tensor(std::vector<int>{test_count, input_dimension}, input);
-	Tensor output_tensor(std::vector<int>{test_count, output_dimension}, output);
-	return std::make_pair(input_tensor, output_tensor);
-}
-
-float calculate_loss(std::vector<Dataset>& test, Module& your_nn, std::function<Tensor(Tensor, Tensor)> Loss = MSELoss) {
-	std::pair<Tensor, Tensor> data = load_dataset(test, 0, test.size());
-
-	Tensor tenso = your_nn(data.first);
-	Tensor final_loss = Loss(tenso, data.second);
-
-	return MeanAll(final_loss).accessA(std::vector<int>{});
-}
-
-class MyNeuralNetwork: public Module {
-public:
-	MyNeuralNetwork() {
-		layer1 = LinearLayer(2, 16);
-		layer2 = LinearLayer(16, 16);
-		layer3 = LinearLayer(16, 1);
-		register_parameter(layer1);
-		register_parameter(layer2);
-		register_parameter(layer3);
+	// Create the perm array: [sz-1, 0, 1, ..., sz-2]
+	std::vector<int> perm;
+	perm.push_back(sz - 1);
+	for (int i = 0; i < sz - 1; ++i) {
+		perm.push_back(i);
 	}
 
-	Tensor forward(Tensor x) override {
-		x = reLU(layer1(x));
-		x = reLU(layer2(x));
-		x = Sigmoid(layer3(x));
-		return x;
+	public_state = public_state.PermuteDimension(perm);
+	hidden_state = hidden_state.PermuteDimension(perm);
+
+	// Assuming Merge is a member function of Tensor based on your bindings
+	Tensor state = public_state.Merge(hidden_state);
+
+	// Create the invperm array: [1, 2, ..., sz-1, 0]
+	std::vector<int> invperm;
+	for (int i = 0; i < sz - 1; ++i) {
+		invperm.push_back(i + 1);
 	}
-private:
-	LinearLayer layer1, layer2, layer3;
-};
+	invperm.push_back(0);
+
+	return state.PermuteDimension(invperm);
+}
+
+Tensor extract_public(Tensor tensor) {
+	return tensor.Slice({ 0 }, { 0 });
+}
+
+Tensor extract_hidden(Tensor tensor) {
+	return tensor.Slice({ 1 }, { 3 });
+}
 
 void solve() {
-	//MyNeuralNetwork my_nn;
-	Sequential my_nn = Sequential({
-		std::make_shared<LinearLayer>(2, 16),
+	Sequential model = Sequential({
+		std::make_shared<LinearLayer>(4, 8),
+		std::make_shared<reLU_Layer>(reLU_Layer()),
+		std::make_shared<LinearLayer>(8, 8),
 		std::make_shared<reLU_Layer>(),
-		std::make_shared<LinearLayer>(16, 16),
-		std::make_shared<reLU_Layer>(),
-		std::make_shared<LinearLayer>(16, 1),
-		std::make_shared<Sigmoid_Layer>(),
+		std::make_shared<LinearLayer>(8, 4),
+		std::make_shared<Sigmoid_Layer>()
 	});
 
-
-	my_nn.load_state_dict(IOHandle::read(std::string(PROJECT_DIR) + "//asset//tmp.txt"));
-
-
-	std::cout << "--> MSE Loss:\n";
-	std::cout << "----> On public test: " << calculate_loss(public_test, my_nn) << "\n";
-	std::cout << "----> On private test: " << calculate_loss(private_test, my_nn) << "\n";
-
-	std::cout << "--> MAE Loss:\n";
-	std::cout << "----> On public test: " << calculate_loss(public_test, my_nn, MAELoss) << "\n";
-	std::cout << "----> On private test: " << calculate_loss(private_test, my_nn, MAELoss) << "\n";
-	/*
-	float lr = 0.001;
-	Adam optimizer1(lr);
-	optimizer1.add_parameter(my_nn.get_parameters());
-
-	
-	clock_t cock = clock();
-	std::pair<Tensor, Tensor> data = load_dataset(public_test, 0, public_test.size());
-	std::vector<int> lmao{ 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000};
-	for (int it = 1; it <= 1000; ++it) {
-		const int BATCH = 101;
-		// This is redundant, but by good design I should still do this
-		optimizer1.zero_gradient();
-		for(int i = 0; i < (int) public_test.size(); i += BATCH){
-			Tensor tenso = data.first.Slice(std::vector<int>{i, 0}, 
-				std::vector<int>{(int)min(i + BATCH, public_test.size()) - 1, 1});
-
-			tenso = my_nn(tenso);
-			tenso = RMSELoss(tenso, data.second.Slice(std::vector<int>{i, 0},
-				std::vector<int>{(int)min(i + BATCH, public_test.size()) - 1, 0}));
-			tenso = MeanAll(tenso);
-			tenso.backward();
-
-			// This automatically reset the gradient
-			optimizer1.step();
-		}
-		//optimizer.decay_learning_rate();
-
-		if (std::binary_search(lmao.begin(), lmao.end(), it)) {
-			std::cout << "After " << it << " rounds of training\n";
-			std::cout << "--> Time elapsed: " << clock() - cock << "ms!\n";
-
-			std::cout << "--> MSE Loss:\n";
-			std::cout << "----> On public test: " << calculate_loss(public_test, my_nn) << "\n";
-			std::cout << "----> On private test: " << calculate_loss(private_test, my_nn) << "\n";
-
-			std::cout << "--> MAE Loss:\n";
-			std::cout << "----> On public test: " << calculate_loss(public_test, my_nn, MAELoss) << "\n";
-			std::cout << "----> On private test: " << calculate_loss(private_test, my_nn, MAELoss) << "\n";
-		}
+	const float PI = std::atan(1) * 4;
+	std::vector<std::vector<float>> public_test;
+	for (int i = 0; i < 100; ++i) {
+		std::vector<float> cur;
+		for (int j = 0; j < 10; ++j)
+			cur.push_back(std::sin(PI * (i + j) / 50));
+		public_test.push_back(cur);
 	}
 
-	IOHandle::write(my_nn.get_state_dict(), std::string(PROJECT_DIR) + "//asset//tmp.txt");*/
+	Tensor shit = Ones(std::vector<int>{4});
+	if (true) {
+		std::cout << "one\n";
+		Tensor Hentai = model(shit);
+		Hentai = model(Hentai);
+		std::cout << "two\n";
+	}
+	std::cout << "three\n";
 }
 
 
 
 void debug_zone() {
-	Tensor gaming = UniformRandom(std::vector<int>{6, 6}, -1, 1);
-	std::cout << gaming << "\n";
-	gaming = Unfold(gaming, 3, 3);
-	std::cout << gaming << "\n";
-
-	Conv2D convolayer({ 3, 3 });
-	std::cout << convolayer(gaming) << "\n";
-
+	std::vector<std::vector<std::vector<float>>> a(2, std::vector<std::vector<float>>(2, std::vector<float>(2, 1)));
+	Tensor gaming = CreateTensor(a);
+	Tensor bulul = gaming * 3;
+	Tensor halal = bulul * 6;
+	std::cout << gaming << "\n" << bulul << "\n" << halal << "\n\n";
+	halal.backward();
+	std::cout << gaming << "\n" << bulul << "\n";
 }
 
 int main(int argv, char* args[]) {
@@ -174,9 +94,7 @@ int main(int argv, char* args[]) {
 
 	std::cout << std::fixed << std::setprecision(9);
 
-	prepare_dataset();
-
-	if (true)
+	if (false)
 		debug_zone();
 	else solve();
 

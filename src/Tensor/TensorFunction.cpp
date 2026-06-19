@@ -11,7 +11,7 @@ std::shared_ptr<RawTensor> TensorFunction::forward(std::shared_ptr<RawTensor> x)
 		ans->A()->data()[i] = tmp[i];
 	ans->add_parent(x); 
 	ans->set_trans_type(CUSTOM_FUNCTION);
-	ans->setDF(dF);
+	ans->set_df(dF);
 	return ans;
 }
 Tensor TensorFunction::forward(Tensor f) { return Tensor(forward(f.ts)); }

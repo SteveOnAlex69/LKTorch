@@ -38,4 +38,19 @@ Tensor ScalarSubtract(Tensor x, float y);
 
 Tensor Unfold(Tensor x, int a, int b);
 
+
+
+// This be some bullshit
+Tensor& operator += (Tensor& x, Tensor y);
+Tensor& operator -= (Tensor& x, Tensor y);
+Tensor& operator *= (Tensor& x, Tensor y);
+
+Tensor& operator += (Tensor& x, float y);
+Tensor& operator -= (Tensor& x, float y);
+Tensor& operator *= (Tensor& x, float y);
+Tensor& operator /= (Tensor& x, float y);
+
+
+
+
 #endif

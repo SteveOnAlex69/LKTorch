@@ -12,8 +12,8 @@ public:
 		n = x, m = y;
 		W = UniformRandom(std::vector<int>{x, y}, -1, 1);
 		B = UniformRandom(std::vector<int>{y}, -1, 1);
-		register_parameter(W);
-		register_parameter(B);
+		RegisterParameter(W);
+		RegisterParameter(B);
 	}
 	Tensor forward (Tensor x) override {return x * W + B;}
 private:
@@ -29,7 +29,7 @@ public:
 		for (int i : input) len_in *= i;
 		for (int i : output) len_out *= i;
 		li = LinearLayer(len_in, len_out);
-		register_parameter(li);
+		RegisterParameter(li);
 	}
 	Tensor forward(Tensor x) override { return li(x.Reshape(std::vector<int>{len_in})).Reshape(output); }
 private:

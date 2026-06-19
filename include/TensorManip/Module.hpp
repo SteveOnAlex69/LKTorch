@@ -10,10 +10,10 @@ public:
 	virtual Tensor forward(Tensor x) = 0;
 
 	Tensor operator () (Tensor x) { return forward(x); }
-	std::vector<Tensor> get_parameters() { return parameters; }
+	std::vector<Tensor> GetParameters() { return parameters; }
 
 
-	std::vector<std::vector<float>> get_state_dict() {
+	std::vector<std::vector<float>> GetStateDict() {
 		std::vector<std::vector<float>> ans;
 		for (auto i : parameters) {
 			StaticFloatVector& cur = *i.A();
@@ -21,11 +21,11 @@ public:
 		}
 		return ans;
 	}
-	void load_state_dict(std::vector<std::vector<float>> bruh) {
+	void LoadStateDict(std::vector<std::vector<float>> bruh) {
 		int n = bruh.size();
 		if (n != parameters.size()) throw_error("In load state dict: parameter mismatched");
 		for (int i = 0; i < n; ++i) {
-			if (parameters[i].get_tensor_size() != bruh[i].size()) throw_error("In load state dict: parameter mismatched");
+			if (parameters[i].size() != bruh[i].size()) throw_error("In load state dict: parameter mismatched");
 			StaticFloatVector& cur = *parameters[i].A();
 			for (int j = 0; j < bruh[i].size(); ++j)
 				cur[j] = bruh[i][j];
@@ -33,13 +33,13 @@ public:
 	}
 protected:
 	std::vector<Tensor> parameters;
-	void register_parameter(Tensor param) { parameters.push_back(param); }
-	void register_parameter(std::vector<Tensor> param) { 
+	void RegisterParameter(Tensor param) { parameters.push_back(param); }
+	void RegisterParameter(std::vector<Tensor> param) {
 		for(auto i: param)
 			parameters.push_back(i); 
 	}
-	void register_parameter(Module &x) {
-		for (auto i : x.get_parameters())
+	void RegisterParameter(Module &x) {
+		for (auto i : x.GetParameters())
 			parameters.push_back(i);
 	}
 };

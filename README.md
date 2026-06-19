@@ -53,5 +53,5 @@ I am trying to clone PyTorch. Obviously, my implementation suck ass, but let's t
 - Adding other fun type of loss function. (DONE)
 - Adding other type of optimizer, like Adam, Simulated Annealling, SGD with momentum. (DONE)
 - Adding the save and load function to a binary file. (HALF ASS DONE)
-- Possibly speeding up the tensor operations. (NAH)
 - Make a python binding (DONE)
+- Speeding up Tensor math (haven't done)

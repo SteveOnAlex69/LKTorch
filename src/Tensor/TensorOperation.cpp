@@ -264,20 +264,20 @@ Tensor ValueMultiply(Tensor x, Tensor y) { return x.ValueMultiply(y); }
 
 
 Tensor Sum(Tensor x) {
-	StaticIntVector dx = x.get_tensor_dimension();
+	StaticIntVector dx = x.dimension();
 	if (dx.size() == 0) throw_error("In Sum Function: Cannot perform on rank-0 tensor");
 	Tensor tmp = x * UniformValue(std::vector<int>{dx[dx.size() - 1]}, 1);
 	return tmp;
 }
 Tensor Mean(Tensor x) {
-	StaticIntVector dx = x.get_tensor_dimension();
+	StaticIntVector dx = x.dimension();
 	if (dx.size() == 0) throw_error("In Mean Function: Cannot perform on rank-0 tensor");
 	Tensor tmp = x * UniformValue(std::vector<int>{dx[dx.size() - 1]}, (float)1 / dx[dx.size() - 1]);
 	return tmp;
 }
 
 Tensor Flatten(Tensor x) {
-	return x.Reshape(std::vector<int>{x.get_tensor_size()});
+	return x.Reshape(std::vector<int>{x.size()});
 }
 
 
@@ -335,11 +335,11 @@ Tensor ScalarAdd(Tensor x, float y) { return x + y; }
 Tensor ScalarSubtract(Tensor x, float y) { return x - y; }
 
 Tensor SoftMax(Tensor x) {
-	std::vector<int> d = x.get_tensor_dimension();
+	std::vector<int> d = x.dimension();
 	if (d.size() == 0) throw_error("In SoftMax Function: Cannot perform on rank-0 tensor");
 
 	Tensor y = Inverse(Sum(x));
-	int x_size = x.get_tensor_size(), d2 = d[d.size() - 1];
+	int x_size = x.size(), d2 = d[d.size() - 1];
 	x = x.Reshape(std::vector<int>{x_size / d2, d2}); y = Flatten(y);
 	x = Transpose(x);
 	x = x.ValueMultiply(y);
@@ -375,10 +375,20 @@ Tensor Huber(Tensor x, float epsilon) {
 
 
 Tensor Unfold(Tensor x, int a, int b) {
-	StaticIntVector d = x.get_tensor_dimension();
+	StaticIntVector d = x.dimension();
 	int n = d[d.size() - 2], m = d[d.size() - 1];
 	x = x.Slice(std::vector<int>{0, 0}, std::vector<int>{n - n % a-1, m - m % b-1});
 	x = x.Reshape(std::vector<int>{n / 3, 3, m / 3, 3});
 	x = x.PermuteDimension({0, 2, 1, 3});
 	return x;
 }
+
+
+Tensor& operator += (Tensor& x, Tensor y) { x = x + y; return x; }
+Tensor& operator -= (Tensor& x, Tensor y) { x = x - y; return x; }
+Tensor& operator *= (Tensor& x, Tensor y) { x = x * y; return x; }
+
+Tensor& operator += (Tensor& x, float y) { x = x + y; return x; }
+Tensor& operator -= (Tensor& x, float y) { x = x - y; return x; }
+Tensor& operator *= (Tensor& x, float y) { x = x * y; return x; }
+Tensor& operator /= (Tensor& x, float y) { x = x / y; return x; }
