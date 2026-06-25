@@ -52,7 +52,7 @@ target_sources(lktorch PRIVATE
 "src/Tensor/TensorFunction.cpp" "src/Tensor/TensorOperation.cpp" "src/Tensor/TensorInit.cpp" 
 
 "src/TensorManip/Loss.cpp" "src/TensorManip/Optimizer.cpp" 
- "src/Tensor/SingletonTensor.cpp")
+ "src/Tensor/SingletonTensor.cpp" "src/Tensor/TensorMathOp.cpp")
 
 
 if(MSVC)

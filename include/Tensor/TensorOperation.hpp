@@ -3,9 +3,8 @@
 
 #include <Tensor/BaseTensor.hpp>
 #include <Tensor/TensorFunction.hpp>
+#include <Tensor/TensorMathOp.hpp>
 
-extern TensorFunction reLU, Sigmoid, Abs, Sqr, Sqrt, Cube, Cbrt, Log, Tanh, Inverse, Min, Max, Exp;
-extern TensorFunction Sin, Cos, Tan, Asin, Acos, Atan;
 
 Tensor MapValue(Tensor x, std::vector<std::pair<int, int>> mp, std::pair<int, int> stride, std::vector<int> new_dimension);
 Tensor Permute(Tensor x, std::vector<int> new_d, std::vector<int> new_p);
@@ -25,7 +24,6 @@ Tensor SumAll(Tensor x);
 Tensor MeanAll(Tensor x);
 
 Tensor Flatten(Tensor x, int dim = 0);
-Tensor Huber(Tensor x, float epsilon);
 
 Tensor operator * (Tensor x, float y);
 Tensor operator / (Tensor x, float y);
