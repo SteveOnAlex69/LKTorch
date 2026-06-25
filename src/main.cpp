@@ -80,7 +80,8 @@ void solve() {
 
 
 void debug_zone() {
-	Tensor a = UniformRandom(std::vector<int>{4, 4}, 0, 1);
+	Tensor a = UniformRandom(std::vector<int>{2, 2}, 0, 1);
+	std::cout << a << " " << Pow(a, -1) << "\n";
 }
 
 int main(int argv, char* args[]) {

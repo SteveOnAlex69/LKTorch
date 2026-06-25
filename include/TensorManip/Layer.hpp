@@ -38,6 +38,7 @@ private:
 	LinearLayer li;
 };
 
+
 class Functional_Layer : public Module {
 public:
 	Functional_Layer(TensorFunction f) : f(f) {}
@@ -46,85 +47,64 @@ private:
 	TensorFunction f;
 };
 
-class reLU_Layer: public Module {
-public:
-	Tensor forward(Tensor x) override { return reLU(x); }
-};
-class Sigmoid_Layer : public Module {
-public:
-	Tensor forward(Tensor x) override { return Sigmoid(x); }
-};
-class Abs_Layer : public Module {
-public:
-	Tensor forward(Tensor x) override { return Abs(x); }
-};
-class Sqr_Layer : public Module {
-public:
-	Tensor forward(Tensor x) override { return Sqr(x); }
-};
-class Huber_Layer : public Module {
-public:
-	Huber_Layer(float epsilon) : epsilon(epsilon) {}
-	Tensor forward(Tensor x) override { return Huber(x, epsilon); }
-private: 
-	float epsilon;
-};
-class Sqrt_Layer : public Module {
-public:
-	Tensor forward(Tensor x) override { return Sqrt(x); }
-};
-class Log_Layer : public Module {
-public:
-	Tensor forward(Tensor x) override { return Log(x); }
-};
-class Tanh_Layer : public Module {
-public:
-	Tensor forward(Tensor x) override { return Tanh(x); }
-};
-class Inverse_Layer : public Module {
-public:
-	Tensor forward(Tensor x) override { return Inverse(x); }
-};
-class Exp_Layer : public Module {
-public:
-	Tensor forward(Tensor x) override { return Exp(x); }
-};
-class Min_Layer : public Module {
-public:
-	Tensor forward(Tensor x) override { return Min(x); }
-};
-class Max_Layer : public Module {
-public:
-	Tensor forward(Tensor x) override { return Max(x); }
+
+
+#define constructSimpleLayer(LAYER_NAME, FUNCTION) \
+class LAYER_NAME : public Module { \
+public: \
+	Tensor forward(Tensor x) override { return FUNCTION(x); } \
 };
 
-class MinPool_Layer : public Module {
-public:
-	Tensor forward(Tensor x) override { return MinPool(x); }
-};
-class MaxPool_Layer : public Module {
-public:
-	Tensor forward(Tensor x) override { return MaxPool(x); }
+constructSimpleLayer(reLU_Layer, reLU);
+constructSimpleLayer(Sigmoid_Layer, Sigmoid);
+constructSimpleLayer(Abs_Layer, Abs);
+
+constructSimpleLayer(Sqr_Layer, Sqr);
+constructSimpleLayer(Sqrt_Layer, Sqrt);
+constructSimpleLayer(Cube_Layer, Cube);
+constructSimpleLayer(Cbrt_Layer, Cbrt);
+
+constructSimpleLayer(Log_Layer, Log);
+constructSimpleLayer(Inverse_Layer, Inverse);
+constructSimpleLayer(Exp_Layer, Exp);
+
+constructSimpleLayer(Sinh_Layer, Sinh);
+constructSimpleLayer(Cosh_Layer, Cosh);
+constructSimpleLayer(Tanh_Layer, Tanh);
+
+
+constructSimpleLayer(Min_Layer, Min);
+constructSimpleLayer(Max_Layer, Max);
+constructSimpleLayer(MinPool_Layer, MinPool);
+constructSimpleLayer(MaxPool_Layer, MaxPool);
+
+constructSimpleLayer(Sum_Layer, Sum);
+constructSimpleLayer(Mean_Layer, Mean);
+constructSimpleLayer(SoftMax_Layer, SoftMax);
+
+
+#define constructSinglyLayer(LAYER_NAME, FUNCTION, VARIABLE_TYPE, VARIABLE_NAME) \
+class LAYER_NAME : public Module { \
+public: \
+	LAYER_NAME(VARIABLE_TYPE VARIABLE_NAME): VARIABLE_NAME(VARIABLE_NAME){}\
+	Tensor forward(Tensor x) override { return FUNCTION(x, VARIABLE_NAME); } \
+private:\
+	VARIABLE_TYPE VARIABLE_NAME;\
 };
 
-class PermuteDimension_Layer : public Module {
-public:
-	PermuteDimension_Layer(std::vector<int> y) : y(y) {}
-	Tensor forward(Tensor x) override { return PermuteDimension(x, y); }
-private:
-	std::vector<int> y;
-};
-class Reshape_Layer : public Module {
-public:
-	Reshape_Layer(std::vector<int> y): y(y){}
-	Tensor forward(Tensor x) override { return Reshape(x, y); }
-private: 
-	std::vector<int> y;
-};
-class Transpose_Layer : public Module {
-public:
-	Tensor forward(Tensor x) override { return Transpose(x); }
-};
+constructSinglyLayer(Huber_Layer, Huber, float, epsilon);
+constructSinglyLayer(PermuteDimension_Layer, PermuteDimension, std::vector<int>, y);
+constructSinglyLayer(Reshape_Layer, Reshape, std::vector<int>, y);
+constructSimpleLayer(Transpose_Layer, Transpose);
+constructSinglyLayer(Flatten_Layer, Flatten, int, dim);
+
+constructSinglyLayer(ScalarAdd_Layer, ScalarAdd, int, y);
+constructSinglyLayer(ScalarSubtract_Layer, ScalarSubtract, int, y);
+constructSinglyLayer(ScalarMultiply_Layer, ScalarMultiply, int, y);
+constructSinglyLayer(ScalarDivide_Layer, ScalarDivide, int, y);
+
+constructSinglyLayer(Dropout_Layer, Dropout, float, rate);
+
 class Slice_Layer : public Module {
 public:
 	Slice_Layer(std::vector<int> l, std::vector<int> r) : l(l), r(r){}
@@ -132,53 +112,7 @@ public:
 private:
 	std::vector<int> l, r;
 };
-class Sum_Layer : public Module {
-public:
-	Tensor forward(Tensor x) override { return Sum(x); }
-};
-class Flatten_Layer : public Module {
-public:
-	Flatten_Layer(int dim = 0) : dim(dim) {}
-	Tensor forward(Tensor x) override { return Flatten(x, dim); }
-private:
-	int dim;
-};
-class Mean_Layer : public Module {
-public:
-	Tensor forward(Tensor x) override { return Mean(x); }
-};
-class SoftMax_Layer : public Module {
-public:
-	Tensor forward(Tensor x) override { return SoftMax(x); }
-};
-class ScalarMultiply_Layer : public Module {
-public:
-	ScalarMultiply_Layer(float y) : y(y) {}
-	Tensor forward(Tensor x) override { return ScalarMultiply(x, y); }
-private:
-	float y;
-};
-class ScalarDivide_Layer : public Module {
-public:
-	ScalarDivide_Layer(float y) : y(y) {}
-	Tensor forward(Tensor x) override { return ScalarDivide(x, y); }
-private:
-	float y;
-};
-class ScalarAdd_Layer : public Module {
-public:
-	ScalarAdd_Layer(float y) : y(y) {}
-	Tensor forward(Tensor x) override { return ScalarAdd(x, y); }
-private:
-	float y;
-};
-class ScalarSubtract_Layer : public Module {
-public:
-	ScalarSubtract_Layer(float y) : y(y) {}
-	Tensor forward(Tensor x) override { return ScalarSubtract(x, y); }
-private:
-	float y;
-};
+
 class Unfold_Layer : public Module {
 public:
 	Unfold_Layer(std::vector<int> slider_d, std::vector<int> stride = std::vector<int>(0), std::vector<int> modulo = std::vector<int>(0)) 
@@ -188,12 +122,5 @@ private:
 	std::vector<int> slider_d, stride, modulo;
 };
 
-class Dropout_Layer : public Module {
-public:
-	Dropout_Layer(float rate) : rate(rate) {}
-	Tensor forward(Tensor x) override { return Dropout(x, rate); }
-private:
-	float rate;
-};
 
 #endif

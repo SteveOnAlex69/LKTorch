@@ -60,6 +60,14 @@ namespace log_function { // Yes explosion
 	}
 }
 
+namespace sinh_function {
+	float forward(float x) { return std::sinh(x); }
+	float backward(float x) { return std::cosh(x);}
+}
+namespace cosh_function {
+	float forward(float x) { return std::cosh(x); }
+	float backward(float x) { return std::sinh(x); }
+}
 namespace tanh_function {
 	float forward(float x) { return std::tanh(x); }
 	float backward(float x) { return 1 - sqr_function::forward(forward(x)); }
@@ -84,12 +92,10 @@ namespace inverse_function {
 	}
 }
 
-
 namespace exp_function {
 	float forward(float x) {return std::exp(x);}
 	float backward(float x) {return std::exp(x);}
 }
-
 
 namespace cube_function {
 	float forward(float x) {return x * x * x;}
@@ -154,6 +160,8 @@ constructFunction(Abs, abs_function);
 constructFunction(Sqr, sqr_function);
 constructFunction(Sqrt, sqrt_function);
 constructFunction(Log, log_function);
+constructFunction(Sinh, sinh_function);
+constructFunction(Cosh, cosh_function);
 constructFunction(Tanh, tanh_function);
 constructFunction(Inverse, inverse_function);
 constructFunction(Exp, exp_function);
@@ -185,6 +193,26 @@ Tensor Huber(Tensor x, float epsilon) {
 					ans[i] = abs_function::backward(x[i]) * epsilon;
 				else
 					ans[i] = x[i];
+			}
+			return ans;
+		}
+	)(x);
+}
+
+Tensor Pow(Tensor x, float p) {
+	return TensorFunction(
+		[=](std::vector<float> x, int row) -> std::vector<float> {
+			std::vector<float> ans(x.size());
+			for (int i = 0; i < x.size(); ++i) {
+				ans[i] = std::pow(x[i], p);
+			}
+			return ans;
+		},
+
+		[=](std::vector<float> x, int row) -> std::vector<float> {
+			std::vector<float> ans(x.size());
+			for (int i = 0; i < x.size(); ++i) {
+				ans[i] = std::pow(x[i], p-1) * p;
 			}
 			return ans;
 		}
@@ -259,4 +287,3 @@ TensorFunction Min(
 		return ans;
 	}
 );
-
