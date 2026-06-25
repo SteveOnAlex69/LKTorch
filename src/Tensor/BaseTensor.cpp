@@ -3,7 +3,6 @@
 #include <Tensor/BaseTensor.hpp>
 
 Tensor::Tensor(std::shared_ptr<RawTensor> t) { ts = t; }
-Tensor::Tensor(std::vector<int> d) { ts = std::make_shared<RawTensor>(d); }
 Tensor::Tensor(std::vector<int> d, std::vector<float> x) { ts = std::make_shared<RawTensor>(d, x);}
 
 int Tensor::size() {	return ts->get_tensor_size(); }
@@ -32,7 +31,9 @@ Tensor operator + (Tensor  x, Tensor  y) { return Tensor(x.ts + y.ts); }
 Tensor operator - (Tensor  x, Tensor  y) { return Tensor(x.ts - y.ts); }
 Tensor operator * (Tensor  x, Tensor  y) { return Tensor(x.ts * y.ts); }
 
-
+Tensor Tensor::MapValue(std::vector<std::pair<int, int>> mp, std::pair<int, int> stride, std::vector<int> new_dimension) { 
+	return Tensor(map_value(ts, mp, stride, new_dimension)); 
+}
 Tensor Tensor::Permute(std::vector<int> new_d, std::vector<int> new_perm) { return Tensor(permute(ts, new_d, new_perm)); }
 Tensor Tensor::PermuteDimension(std::vector<int> perm) { return Tensor(permute_dimension(ts, perm)); }
 Tensor Tensor::Transpose() { return Tensor(transpose(ts)); }

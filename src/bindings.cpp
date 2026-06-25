@@ -9,7 +9,7 @@
 #include <vector>
 
 namespace py = pybind11;
-typedef std::function<std::vector<float>(std::vector<float>)> VectorFunction;
+typedef std::function<std::vector<float>(std::vector<float>, int)> VectorFunction;
 
 
 // "tensor_engine" is the name you will type when you `import` it in Python
@@ -21,9 +21,6 @@ PYBIND11_MODULE(lktorch, m) {
     // 1. TENSOR  CLASS
     // ========================================================================
     py::class_<Tensor>(m, "Tensor")
-        .def(py::init<std::vector<int>>(),
-            py::arg("dimension"),
-            "Initialize a Tensor with a given shape/dimension configuration.")
         .def(py::init<std::vector<int>, std::vector<float>>(),
             py::arg("dimension"), py::arg("data"),
             "Initialize a Tensor with a given shape and populate it with a flat list of float values.")
@@ -37,6 +34,20 @@ PYBIND11_MODULE(lktorch, m) {
                 std::vector<float> flat_data(ptr, ptr + buf.size);
                 return Tensor(shape, flat_data);
                 }), py::arg("data"), "Initialize a Tensor from any nested Python list or NumPy array.")
+        .def("numpy", [](Tensor& self) {
+                std::vector<int> dim = self.dimension();
+                std::vector<ssize_t> shape(dim.begin(), dim.end());
+                py::array_t<float> result(shape);
+
+                py::buffer_info buf = result.request();
+                float* ptr = static_cast<float*>(buf.ptr);
+
+                std::vector<float> tensor_data = self.get_data();
+
+                std::memcpy(ptr, tensor_data.data(), tensor_data.size() * sizeof(float));
+
+                return result;
+            }, "Convert the Tensor back into a standard NumPy array.")
         
         .def("size", &Tensor::size,
             "Returns the total number of elements flattened inside the tensor.")
@@ -58,6 +69,8 @@ PYBIND11_MODULE(lktorch, m) {
             py::arg("indices"),
             "Access the gradient value (grad) at a specific coordinate vector.")
 
+        .def("MapValue", &Tensor::MapValue, py::arg("mapping"), py::arg("stride"), py::arg("new_dimension"),
+            "Map the value in the tensor however you like")
         .def("Permute", &Tensor::Permute, py::arg("target_dimension"), py::arg("target_permutation"),
             "Permuting the element in the tensor however you like")
         .def("PermuteDimension", &Tensor::PermuteDimension, py::arg("target_dimension"),
@@ -100,7 +113,9 @@ PYBIND11_MODULE(lktorch, m) {
         });
     // --- GLOBAL SCOPE FUNCTIONS ---
 
-    
+
+    m.def("MapValue", &MapValue, py::arg("tensor"), py::arg("mapping"), py::arg("stride"), py::arg("new_dimension"),
+        "Map the value in the tensor however you like");
     m.def("Permute", &Permute, py::arg("tensor"), py::arg("target_dimension"), py::arg("target_permutation"),
         "Permuting the element in the tensor however you like");
     m.def("PermuteDimension", &PermuteDimension, py::arg("tensor"), py::arg("target_dimension"),
@@ -113,11 +128,18 @@ PYBIND11_MODULE(lktorch, m) {
 
     m.def("Sum", &Sum, py::arg("x"), "Get the sum of the outermost layer of the tensor");
     m.def("Mean", &Mean, py::arg("x"), "Get the mean of the outermost layer of the tensor");
+    m.def("MaxPool", &MaxPool, py::arg("x"), "Get the max of the outermost layer of the tensor");
+    m.def("MinPool", &MinPool, py::arg("x"), "Get the min of the outermost layer of the tensor");
+    m.def("MaxIndex", &MaxIndex, py::arg("x"), "Get the max index of the outermost layer of the tensor (backprop)");
+    m.def("MinIndex", &MinIndex, py::arg("x"), "Get the min index of the outermost layer of the tensor (backprop)");
     m.def("SoftMax", &SoftMax, py::arg("x"), "Get the SoftMax of the outermost layer of the tensor");
+    m.def("Dropout", &Dropout, py::arg("x"), py::arg("rate"), "Drop out rate of the tensor");
+    m.def("Unfold", &Unfold, py::arg("x"), py::arg("stride_d"), 
+        py::arg("stride") = std::vector<int>(0), py::arg("offset") = std::vector<int>(0), "Unfold the tensor");
 
     m.def("SumAll", &SumAll, py::arg("x"), "Get the sum of the entire tensor");
     m.def("MeanAll", &MeanAll, py::arg("x"), "Get the mean of the entire tensor");
-    m.def("Flatten", &Flatten, py::arg("x"), "Flatten the entire tensor");
+    m.def("Flatten", &Flatten, py::arg("x"), py::arg("dim") = 0, "Flatten the entire tensor");
     m.def("Huber", &Huber, py::arg("x"), py::arg("epsilon"), "Get the huber loss of the entire tensor");
 
     m.def("ScalarMultiply", &ScalarMultiply, py::arg("tensor"), py::arg("y"), "Scalar Multiply");
@@ -178,6 +200,7 @@ PYBIND11_MODULE(lktorch, m) {
     m.attr("Log") = py::cast(Log);
     m.attr("Tanh") = py::cast(Tanh);
     m.attr("Inverse") = py::cast(Inverse);
+    m.attr("Exp") = py::cast(Exp);
     m.attr("Min") = py::cast(Min);
     m.attr("Max") = py::cast(Max);
 
@@ -221,11 +244,17 @@ PYBIND11_MODULE(lktorch, m) {
     py::class_<Log_Layer, Module, std::shared_ptr<Log_Layer>>(m, "Log_Layer").def(py::init<>());
     py::class_<Tanh_Layer, Module, std::shared_ptr<Tanh_Layer>>(m, "Tanh_Layer").def(py::init<>());
     py::class_<Inverse_Layer, Module, std::shared_ptr<Inverse_Layer>>(m, "Inverse_Layer").def(py::init<>());
+    py::class_<Exp_Layer, Module, std::shared_ptr<Exp_Layer>>(m, "Exp_Layer").def(py::init<>());
     py::class_<Min_Layer, Module, std::shared_ptr<Min_Layer>>(m, "Min_Layer").def(py::init<>());
     py::class_<Max_Layer, Module, std::shared_ptr<Max_Layer>>(m, "Max_Layer").def(py::init<>());
+    py::class_<MinPool_Layer, Module, std::shared_ptr<MinPool_Layer>>(m, "MinPool_Layer").def(py::init<>());
+    py::class_<MaxPool_Layer, Module, std::shared_ptr<MaxPool_Layer>>(m, "MaxPool_Layer").def(py::init<>());
+
+    py::class_<PermuteDimension_Layer, Module, std::shared_ptr<PermuteDimension_Layer>>(m, "PermuteDimension_Layer")
+        .def(py::init<std::vector<int>>(), py::arg("dim"));
     py::class_<Transpose_Layer, Module, std::shared_ptr<Transpose_Layer>>(m, "Transpose_Layer").def(py::init<>());
     py::class_<Sum_Layer, Module, std::shared_ptr<Sum_Layer>>(m, "Sum_Layer").def(py::init<>());
-    py::class_<Flatten_Layer, Module, std::shared_ptr<Flatten_Layer>>(m, "Flatten_Layer").def(py::init<>());
+    py::class_<Flatten_Layer, Module, std::shared_ptr<Flatten_Layer>>(m, "Flatten_Layer").def(py::init<int>(), py::arg("dim") = 0);
     py::class_<Mean_Layer, Module, std::shared_ptr<Mean_Layer>>(m, "Mean_Layer").def(py::init<>());
     py::class_<SoftMax_Layer, Module, std::shared_ptr<SoftMax_Layer>>(m, "SoftMax_Layer").def(py::init<>());
 
@@ -236,7 +265,10 @@ PYBIND11_MODULE(lktorch, m) {
     py::class_<Slice_Layer, Module, std::shared_ptr<Slice_Layer>>(m, "Slice_Layer")
         .def(py::init<std::vector<int>, std::vector<int>>(), py::arg("start_indices"), py::arg("end_indices"));
     py::class_<Unfold_Layer, Module, std::shared_ptr<Unfold_Layer>>(m, "Unfold_Layer")
-        .def(py::init<int, int>(), py::arg("height"), py::arg("col"));
+        .def(py::init<std::vector<int>, std::vector<int>, std::vector<int>>(), py::arg("stride_d")
+            , py::arg("stride") = std::vector<int>(0), py::arg("offset") = std::vector<int>(0));
+    py::class_<Dropout_Layer, Module, std::shared_ptr<Dropout_Layer>>(m, "Dropout_Layer")
+        .def(py::init<float>(), py::arg("rate"));
 
     py::class_<ScalarMultiply_Layer, Module, std::shared_ptr<ScalarMultiply_Layer>>(m, "ScalarMultiply_Layer")
         .def(py::init<float>(), py::arg("scalar"));
@@ -266,10 +298,10 @@ PYBIND11_MODULE(lktorch, m) {
     m.def("MAELoss", &MAELoss, py::arg("a"), py::arg("b"), "Mean Absolute Error.");
     m.def("HuberLoss", &HuberLoss, py::arg("a"), py::arg("b"), py::arg("epsilon"), "Huber Loss with epsilon smoothing.");
     m.def("RMSELoss", &RMSELoss, py::arg("a"), py::arg("b"), "Root Mean Squared Error.");
-    m.def("BCELoss", &BCELoss, py::arg("target"), py::arg("prediction"), "Binary Cross Entropy Loss.");
-    m.def("HingeLoss", &HingeLoss, py::arg("target"), py::arg("prediction"), "Hinge Loss for SVMs.");
+    m.def("BCELoss", &BCELoss, py::arg("prediction"), py::arg("target"), "Binary Cross Entropy Loss.");
+    m.def("HingeLoss", &HingeLoss, py::arg("prediction"), py::arg("target"), "Hinge Loss for SVMs.");
     m.def("KL_Divergence", &KL_Divergence, py::arg("prediction"), py::arg("target"), "Kullback-Leibler Divergence.");
-    m.def("CrossEntropyLoss", &CrossEntropyLoss, py::arg("target"), py::arg("prediction"), "Cross Entropy Loss for multi-class classification.");
+    m.def("CrossEntropyLoss", &CrossEntropyLoss, py::arg("prediction"), py::arg("target"), "Cross Entropy Loss for multi-class classification.");
 
     // ========================================================================
     // 10. Optimizer

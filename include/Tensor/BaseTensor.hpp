@@ -7,14 +7,7 @@
 struct Tensor {
 	std::shared_ptr<RawTensor> ts;
 	Tensor(std::shared_ptr<RawTensor> t = nullptr);
-	Tensor(std::vector<int> dimension);
 	Tensor(std::vector<int> dimension, std::vector<float> x);
-
-	Tensor(std::vector<float> x);
-	Tensor(std::vector<std::vector<float>> x);
-	Tensor(std::vector<std::vector<std::vector<float>>> x);
-	Tensor(std::vector<std::vector<std::vector<std::vector<float>>>> x);
-	Tensor(std::vector<std::vector<std::vector<std::vector<std::vector<float>>>>> x);
 
 	int size();
 	std::vector<int> dimension();
@@ -29,6 +22,9 @@ struct Tensor {
 	float& accessA(std::vector<int> x) { return ts->access_A(x); }
 	float& accessGA(std::vector<int> x) { return ts->access_GA(x); }
 
+	std::vector<float> get_data() { return cast_to_vector(*A()); }
+
+	Tensor MapValue(std::vector<std::pair<int, int>> mp, std::pair<int, int> stride, std::vector<int> new_dimension);
 	Tensor Permute(std::vector<int> new_d, std::vector<int> new_perm);
 	Tensor PermuteDimension(std::vector<int> perm);
 	Tensor Transpose();

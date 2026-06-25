@@ -8,10 +8,10 @@ Tensor MAELoss(Tensor a, Tensor b);
 Tensor HuberLoss(Tensor a, Tensor b, float epsilon);
 Tensor RMSELoss(Tensor a, Tensor b);
 
-Tensor BCELoss(Tensor target, Tensor prediction);
-Tensor HingeLoss(Tensor target, Tensor prediction);
+Tensor BCELoss(Tensor prediction, Tensor target);
+Tensor HingeLoss(Tensor prediction, Tensor target);
 Tensor KL_Divergence(Tensor prediction, Tensor target);
-Tensor CrossEntropyLoss(Tensor target, Tensor prediction);
+Tensor CrossEntropyLoss(Tensor prediction, Tensor target);
 
 
 

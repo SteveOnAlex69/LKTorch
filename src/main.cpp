@@ -80,13 +80,7 @@ void solve() {
 
 
 void debug_zone() {
-	std::vector<std::vector<std::vector<float>>> a(2, std::vector<std::vector<float>>(2, std::vector<float>(2, 1)));
-	Tensor gaming = CreateTensor(a);
-	Tensor bulul = gaming * 3;
-	Tensor halal = bulul * 6;
-	std::cout << gaming << "\n" << bulul << "\n" << halal << "\n\n";
-	halal.backward();
-	std::cout << gaming << "\n" << bulul << "\n";
+	Tensor a = UniformRandom(std::vector<int>{4, 4}, 0, 1);
 }
 
 int main(int argv, char* args[]) {
@@ -94,7 +88,7 @@ int main(int argv, char* args[]) {
 
 	std::cout << std::fixed << std::setprecision(9);
 
-	if (false)
+	if (true)
 		debug_zone();
 	else solve();
 

@@ -19,4 +19,11 @@ std::ostream& operator << (std::ostream& os, std::vector<T> v) {
 }
 
 
+template <class T1, class T2>
+std::ostream& operator << (std::ostream& os, std::pair<T1, T2> v) {
+	os << "(" << v.first << ", " << v.second << ")";
+	return os;
+}
+
+
 #endif

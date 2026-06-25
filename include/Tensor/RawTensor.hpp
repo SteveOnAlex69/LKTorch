@@ -17,8 +17,7 @@ enum TransformType {
 	VALUE_MULTIPLY = 4,
 	CUSTOM_FUNCTION = 5,
 	CUSTOM_PERMUTE = 6,
-	SLICE = 7,
-	MERGE = 8
+	MERGE = 7
 };
 
 // Defining a tensor, which do a shit tons of things
@@ -33,6 +32,7 @@ public:
 
 	int get_tensor_size();
 	StaticIntVector get_tensor_dimension();
+	int get_row();
 
 	int get_reference_count();
 	void increase_reference_count();
@@ -41,8 +41,8 @@ public:
 	void set_trans_type(TransformType trans);
 	TransformType get_trans_type() const;
 
-	void set_df(std::function<std::vector<float>(std::vector<float>)>  dF);
-	void set_permutation(StaticIntVector perm);
+	void set_df(std::function<std::vector<float>(std::vector<float>, int)>  dF);
+	void set_permutation(std::vector<std::pair<int,int>> perm, std::pair<int,int> stride);
 
 	void add_parent(std::shared_ptr<RawTensor> p);
 	std::vector<std::shared_ptr<RawTensor>> get_parent() const;
@@ -70,8 +70,10 @@ private:
 
 	TransformType t_type = NOTHING;
 	std::vector<std::shared_ptr<RawTensor>> parents;
-	std::function<std::vector<float>(std::vector<float>)> dF;
-	StaticIntVector perm;
+	std::function<std::vector<float>(std::vector<float>, int)> dF;
+
+	std::vector<std::pair<int, int>> perm;
+	std::pair<int, int> stride;
 
 	std::string name;
 };
@@ -81,6 +83,8 @@ std::shared_ptr<RawTensor> operator - (std::shared_ptr<RawTensor> x, std::shared
 
 // This will collapse the middle layer
 std::shared_ptr<RawTensor> operator * (std::shared_ptr<RawTensor> x, std::shared_ptr<RawTensor> y);
+
+std::shared_ptr<RawTensor> map_value(std::shared_ptr<RawTensor> x, std::vector<std::pair<int, int>> perm, std::pair<int, int> stride, StaticIntVector new_dimension);
 
 std::shared_ptr<RawTensor> value_multiply (std::shared_ptr<RawTensor> x, std::shared_ptr<RawTensor> y);
 std::shared_ptr<RawTensor> reshape(std::shared_ptr<RawTensor> x, StaticIntVector y);

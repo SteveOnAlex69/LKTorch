@@ -55,3 +55,9 @@ I am trying to clone PyTorch. Obviously, my implementation suck ass, but let's t
 - Adding the save and load function to a binary file. (HALF ASS DONE)
 - Make a python binding (DONE)
 - Speeding up Tensor math (haven't done)
+
+- Sin, Cos, Tan, Asin, Acos, Atan, Cube, Cbrt
+
+UNIT TESTED:
+- reLU, Sigmoid, Abs, Sqr, Sqrt, Log, Tanh, Inverse, Min, Max
+- Sum, Mean, SumAll, MeanAll

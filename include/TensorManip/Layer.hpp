@@ -85,6 +85,10 @@ class Inverse_Layer : public Module {
 public:
 	Tensor forward(Tensor x) override { return Inverse(x); }
 };
+class Exp_Layer : public Module {
+public:
+	Tensor forward(Tensor x) override { return Exp(x); }
+};
 class Min_Layer : public Module {
 public:
 	Tensor forward(Tensor x) override { return Min(x); }
@@ -92,6 +96,23 @@ public:
 class Max_Layer : public Module {
 public:
 	Tensor forward(Tensor x) override { return Max(x); }
+};
+
+class MinPool_Layer : public Module {
+public:
+	Tensor forward(Tensor x) override { return MinPool(x); }
+};
+class MaxPool_Layer : public Module {
+public:
+	Tensor forward(Tensor x) override { return MaxPool(x); }
+};
+
+class PermuteDimension_Layer : public Module {
+public:
+	PermuteDimension_Layer(std::vector<int> y) : y(y) {}
+	Tensor forward(Tensor x) override { return PermuteDimension(x, y); }
+private:
+	std::vector<int> y;
 };
 class Reshape_Layer : public Module {
 public:
@@ -117,7 +138,10 @@ public:
 };
 class Flatten_Layer : public Module {
 public:
-	Tensor forward(Tensor x) override { return Flatten(x); }
+	Flatten_Layer(int dim = 0) : dim(dim) {}
+	Tensor forward(Tensor x) override { return Flatten(x, dim); }
+private:
+	int dim;
 };
 class Mean_Layer : public Module {
 public:
@@ -157,10 +181,19 @@ private:
 };
 class Unfold_Layer : public Module {
 public:
-	Unfold_Layer(int a, int b) : a(a), b(b) {}
-	Tensor forward(Tensor x) override { return Unfold(x, a, b); }
+	Unfold_Layer(std::vector<int> slider_d, std::vector<int> stride = std::vector<int>(0), std::vector<int> modulo = std::vector<int>(0)) 
+		: slider_d(slider_d), stride(stride), modulo(modulo){}
+	Tensor forward(Tensor x) override { return Unfold(x, slider_d, stride, modulo); }
 private:
-	int a, b;
+	std::vector<int> slider_d, stride, modulo;
+};
+
+class Dropout_Layer : public Module {
+public:
+	Dropout_Layer(float rate) : rate(rate) {}
+	Tensor forward(Tensor x) override { return Dropout(x, rate); }
+private:
+	float rate;
 };
 
 #endif

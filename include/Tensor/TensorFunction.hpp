@@ -5,8 +5,7 @@
 #include <Tensor/BaseTensor.hpp>
 
 // This is a general class to run the function through the entire tensor
-
-typedef std::function<std::vector<float>(std::vector<float>)> VectorFunction;
+typedef std::function<std::vector<float>(std::vector<float>, int)> VectorFunction;
 
 
 class TensorFunction { 
