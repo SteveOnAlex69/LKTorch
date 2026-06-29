@@ -1,4 +1,6 @@
-﻿Copyright (c) 2026 Lê Kiến Thành
+﻿MIT License
+
+Copyright (c) 2026 Lê Kiến Thành
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

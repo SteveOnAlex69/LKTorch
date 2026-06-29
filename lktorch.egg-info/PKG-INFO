@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: lktorch
+Version: 0.1.0
+Summary: A PyTorch-like framework built from scratch
+Requires-Python: >=3.7
+License-File: LICENSE.md
+Requires-Dist: numpy
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
