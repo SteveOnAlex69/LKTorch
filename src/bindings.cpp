@@ -12,6 +12,8 @@ namespace py = pybind11;
 typedef std::function<std::vector<float>(std::vector<float>, int)> VectorFunction;
 
 
+#define VERY_SCARY "The functionality of this function is extremely complex, thus I'd rather not discuss it"
+
 // "tensor_engine" is the name you will type when you `import` it in Python
 PYBIND11_MODULE(lktorch, m) {
     m.doc() = "My C++ Deep Learning Engine";
@@ -132,7 +134,8 @@ PYBIND11_MODULE(lktorch, m) {
     m.def("MinPool", &MinPool, py::arg("x"), "Get the min of the outermost layer of the tensor");
     m.def("MaxIndex", &MaxIndex, py::arg("x"), "Get the max index of the outermost layer of the tensor (backprop)");
     m.def("MinIndex", &MinIndex, py::arg("x"), "Get the min index of the outermost layer of the tensor (backprop)");
-    m.def("SoftMax", &SoftMax, py::arg("x"), "Get the SoftMax of the outermost layer of the tensor");
+    m.def("LinearNormalize", &LinearNormalize, py::arg("x"), "Linear normalize the outermost layer of the tensor");
+    m.def("ExpNormalize", &ExpNormalize, py::arg("x"), "Exponential normalize the outermost layer of the tensor");
     m.def("Dropout", &Dropout, py::arg("x"), py::arg("rate"), "Drop out rate of the tensor");
     m.def("Unfold", &Unfold, py::arg("x"), py::arg("stride_d"), 
         py::arg("stride") = std::vector<int>(0), py::arg("offset") = std::vector<int>(0), "Unfold the tensor");
@@ -192,19 +195,14 @@ PYBIND11_MODULE(lktorch, m) {
     // ========================================================================
     // 4. GLOBAL ACTIVATION FUNCTIONS (The Externs)
     // ========================================================================
-    m.attr("reLU") = py::cast(reLU);
-    m.attr("Sigmoid") = py::cast(Sigmoid);
-    m.attr("Abs") = py::cast(Abs);
-    m.attr("Sqr") = py::cast(Sqr);
-    m.attr("Sqrt") = py::cast(Sqrt);
-    m.attr("Log") = py::cast(Log);
-    m.attr("Tanh") = py::cast(Tanh);
-    m.attr("Inverse") = py::cast(Inverse);
-    m.attr("Exp") = py::cast(Exp);
-    m.attr("Min") = py::cast(Min);
-    m.attr("Max") = py::cast(Max);
-
-
+#define bindTF(NAME) m.attr(#NAME) = py::cast(NAME);
+    bindTF(reLU); bindTF(Sigmoid); bindTF(Abs);
+    bindTF(Min); bindTF(Max);
+    bindTF(Sqr);bindTF(Sqrt);bindTF(Cube);bindTF(Cbrt);
+    bindTF(Log);bindTF(Inverse)bindTF(Exp);
+    bindTF(Sinh);bindTF(Cosh);bindTF(Tanh);
+    bindTF(Sin);bindTF(Cos);bindTF(Tan);bindTF(Asin)bindTF(Acos);bindTF(Atan);
+#undef bindTF
 
 
     // ========================================================================
@@ -236,48 +234,58 @@ PYBIND11_MODULE(lktorch, m) {
     py::class_<Functional_Layer, Module, std::shared_ptr<Functional_Layer>>(m, "Functional_Layer")
         .def(py::init<TensorFunction>(), py::arg("f"), "Wraps a custom differentiable TensorFunction global wrapper.");
 
-    py::class_<reLU_Layer, Module, std::shared_ptr<reLU_Layer>>(m, "reLU_Layer").def(py::init<>());
-    py::class_<Sigmoid_Layer, Module, std::shared_ptr<Sigmoid_Layer>>(m, "Sigmoid_Layer").def(py::init<>());
-    py::class_<Abs_Layer, Module, std::shared_ptr<Abs_Layer>>(m, "Abs_Layer").def(py::init<>());
-    py::class_<Sqr_Layer, Module, std::shared_ptr<Sqr_Layer>>(m, "Sqr_Layer").def(py::init<>());
-    py::class_<Sqrt_Layer, Module, std::shared_ptr<Sqrt_Layer>>(m, "Sqrt_Layer").def(py::init<>());
-    py::class_<Log_Layer, Module, std::shared_ptr<Log_Layer>>(m, "Log_Layer").def(py::init<>());
-    py::class_<Tanh_Layer, Module, std::shared_ptr<Tanh_Layer>>(m, "Tanh_Layer").def(py::init<>());
-    py::class_<Inverse_Layer, Module, std::shared_ptr<Inverse_Layer>>(m, "Inverse_Layer").def(py::init<>());
-    py::class_<Exp_Layer, Module, std::shared_ptr<Exp_Layer>>(m, "Exp_Layer").def(py::init<>());
-    py::class_<Min_Layer, Module, std::shared_ptr<Min_Layer>>(m, "Min_Layer").def(py::init<>());
-    py::class_<Max_Layer, Module, std::shared_ptr<Max_Layer>>(m, "Max_Layer").def(py::init<>());
-    py::class_<MinPool_Layer, Module, std::shared_ptr<MinPool_Layer>>(m, "MinPool_Layer").def(py::init<>());
-    py::class_<MaxPool_Layer, Module, std::shared_ptr<MaxPool_Layer>>(m, "MaxPool_Layer").def(py::init<>());
+#define bindSimpleLayer(LAYER_NAME) py::class_<LAYER_NAME, Module, std::shared_ptr<LAYER_NAME>>(m, #LAYER_NAME).def(py::init<>());
+    bindSimpleLayer(reLU_Layer);
+    bindSimpleLayer(Sigmoid_Layer);
+    bindSimpleLayer(Abs_Layer);
 
-    py::class_<PermuteDimension_Layer, Module, std::shared_ptr<PermuteDimension_Layer>>(m, "PermuteDimension_Layer")
-        .def(py::init<std::vector<int>>(), py::arg("dim"));
-    py::class_<Transpose_Layer, Module, std::shared_ptr<Transpose_Layer>>(m, "Transpose_Layer").def(py::init<>());
-    py::class_<Sum_Layer, Module, std::shared_ptr<Sum_Layer>>(m, "Sum_Layer").def(py::init<>());
-    py::class_<Flatten_Layer, Module, std::shared_ptr<Flatten_Layer>>(m, "Flatten_Layer").def(py::init<int>(), py::arg("dim") = 0);
-    py::class_<Mean_Layer, Module, std::shared_ptr<Mean_Layer>>(m, "Mean_Layer").def(py::init<>());
-    py::class_<SoftMax_Layer, Module, std::shared_ptr<SoftMax_Layer>>(m, "SoftMax_Layer").def(py::init<>());
+    bindSimpleLayer(Sqr_Layer);
+    bindSimpleLayer(Sqrt_Layer);
+    bindSimpleLayer(Cube_Layer);
+    bindSimpleLayer(Cbrt_Layer);
 
-    py::class_<Huber_Layer, Module, std::shared_ptr<Huber_Layer>>(m, "Huber_Layer")
-        .def(py::init<float>(), py::arg("epsilon"));
-    py::class_<Reshape_Layer, Module, std::shared_ptr<Reshape_Layer>>(m, "Reshape_Layer")
-        .def(py::init<std::vector<int>>(), py::arg("new_shape"));
+    bindSimpleLayer(Log_Layer);
+    bindSimpleLayer(Inverse_Layer);
+    bindSimpleLayer(Exp_Layer);
+
+    bindSimpleLayer(Sinh_Layer);
+    bindSimpleLayer(Cosh_Layer);
+    bindSimpleLayer(Tanh_Layer);
+
+    bindSimpleLayer(Min_Layer);
+    bindSimpleLayer(Max_Layer);
+    bindSimpleLayer(MinPool_Layer);
+    bindSimpleLayer(MaxPool_Layer);
+
+    bindSimpleLayer(Sum_Layer);
+    bindSimpleLayer(Mean_Layer);
+    bindSimpleLayer(LinearNormalize_Layer);
+    bindSimpleLayer(ExpNormalize_Layer);
+    bindSimpleLayer(Transpose_Layer);
+#undef bindSimpleLayer
+
+#define bindSinglyLayer(LAYER_NAME, VAR_TYPE, VAR) \
+py::class_<LAYER_NAME, Module, std::shared_ptr<LAYER_NAME>>(m, #LAYER_NAME) \
+    .def(py::init<VAR_TYPE>(), VAR); 
+
+    bindSinglyLayer(PermuteDimension_Layer, std::vector<int>, py::arg("dim"));
+    bindSinglyLayer(Flatten_Layer, int, py::arg("dim") = 0);
+    bindSinglyLayer(Huber_Layer, float, py::arg("epsilon"))
+    bindSinglyLayer(Dropout_Layer, float, py::arg("rate"));
+    bindSinglyLayer(Reshape_Layer, std::vector<int>, py::arg("new_shape"));
+    bindSinglyLayer(ScalarAdd_Layer, float, py::arg("scalar"));
+    bindSinglyLayer(ScalarSubtract_Layer, float, py::arg("scalar"));
+    bindSinglyLayer(ScalarMultiply_Layer, float, py::arg("scalar"));
+    bindSinglyLayer(ScalarDivide_Layer, float, py::arg("scalar"));
+
     py::class_<Slice_Layer, Module, std::shared_ptr<Slice_Layer>>(m, "Slice_Layer")
         .def(py::init<std::vector<int>, std::vector<int>>(), py::arg("start_indices"), py::arg("end_indices"));
     py::class_<Unfold_Layer, Module, std::shared_ptr<Unfold_Layer>>(m, "Unfold_Layer")
         .def(py::init<std::vector<int>, std::vector<int>, std::vector<int>>(), py::arg("stride_d")
             , py::arg("stride") = std::vector<int>(0), py::arg("offset") = std::vector<int>(0));
-    py::class_<Dropout_Layer, Module, std::shared_ptr<Dropout_Layer>>(m, "Dropout_Layer")
-        .def(py::init<float>(), py::arg("rate"));
 
-    py::class_<ScalarMultiply_Layer, Module, std::shared_ptr<ScalarMultiply_Layer>>(m, "ScalarMultiply_Layer")
-        .def(py::init<float>(), py::arg("scalar"));
-    py::class_<ScalarDivide_Layer, Module, std::shared_ptr<ScalarDivide_Layer>>(m, "ScalarDivide_Layer")
-        .def(py::init<float>(), py::arg("scalar"));
-    py::class_<ScalarAdd_Layer, Module, std::shared_ptr<ScalarAdd_Layer>>(m, "ScalarAdd_Layer")
-        .def(py::init<float>(), py::arg("scalar"));
-    py::class_<ScalarSubtract_Layer, Module, std::shared_ptr<ScalarSubtract_Layer>>(m, "ScalarSubtract_Layer")
-        .def(py::init<float>(), py::arg("scalar"));
+#undef bindSinglyLayer
+
 
 
     // ========================================================================
@@ -294,14 +302,17 @@ PYBIND11_MODULE(lktorch, m) {
     // ========================================================================
     // 9. LOSS
     // ========================================================================
-    m.def("MSELoss", &MSELoss, py::arg("a"), py::arg("b"), "Mean Squared Error.");
-    m.def("MAELoss", &MAELoss, py::arg("a"), py::arg("b"), "Mean Absolute Error.");
-    m.def("HuberLoss", &HuberLoss, py::arg("a"), py::arg("b"), py::arg("epsilon"), "Huber Loss with epsilon smoothing.");
-    m.def("RMSELoss", &RMSELoss, py::arg("a"), py::arg("b"), "Root Mean Squared Error.");
-    m.def("BCELoss", &BCELoss, py::arg("prediction"), py::arg("target"), "Binary Cross Entropy Loss.");
-    m.def("HingeLoss", &HingeLoss, py::arg("prediction"), py::arg("target"), "Hinge Loss for SVMs.");
-    m.def("KL_Divergence", &KL_Divergence, py::arg("prediction"), py::arg("target"), "Kullback-Leibler Divergence.");
-    m.def("CrossEntropyLoss", &CrossEntropyLoss, py::arg("prediction"), py::arg("target"), "Cross Entropy Loss for multi-class classification.");
+#define bindLossFunction(NAME, DESCRIPTION) m.def(#NAME, &NAME, py::arg("prediction"), py::arg("target"), DESCRIPTION);
+    bindLossFunction(MSELoss, "Mean Squared Error.");
+    bindLossFunction(MAELoss, "Mean Absolute Error.");
+    bindLossFunction(RMSELoss, "Root Mean Squared Error.");
+    bindLossFunction(BCELoss, "Binary Cross Entropy Loss.");
+    bindLossFunction(HingeLoss, "Hinge Loss for SVMs.");
+    bindLossFunction(KL_Divergence, "Kullback-Leibler Divergence.");
+    bindLossFunction(CrossEntropyLoss, "Cross Entropy Loss for multi-class classification.");
+#undef bindLossFunction
+    m.def("HuberLoss", &HuberLoss, py::arg("prediction"), py::arg("target"), py::arg("epsilon"), "Huber Loss with epsilon smoothing.");
+
 
     // ========================================================================
     // 10. Optimizer
@@ -312,7 +323,6 @@ PYBIND11_MODULE(lktorch, m) {
         .def("set_learning_rate", &GradientDescent::set_learning_rate, py::arg("lr"))
         .def("step", &GradientDescent::step, "Update all registered parameters using calculated gradients.")
         .def("zero_gradient", &GradientDescent::zero_gradient, "Wipes the gradients from all tracked tensors.")
-
         .def("add_parameter", static_cast<void (GradientDescent::*)(Tensor)>(&GradientDescent::add_parameter), py::arg("ts"))
         .def("add_parameter", static_cast<void (GradientDescent::*)(std::vector<Tensor>)>(&GradientDescent::add_parameter), py::arg("ts"));
 
@@ -356,9 +366,9 @@ PYBIND11_MODULE(lktorch, m) {
     // ========================================================================
     // 12. Singleton backprop
     // ========================================================================
-    m.def("activate_backprop", &activate_backprop, "The functionality of this function is extremely complex, thus I'd rather not discuss it");
-    m.def("deactivate_backprop", &deactivate_backprop, "The functionality of this function is extremely complex, thus I'd rather not discuss it");
-    m.def("toggle_backprop", &toggle_backprop, "The functionality of this function is extremely complex, thus I'd rather not discuss it");
-    m.def("set_backprop_status", &set_backprop_status, py::arg("flag"), "The functionality of this function is extremely complex, thus I'd rather not discuss it");
-    m.def("backprop_activated", &backprop_activated, "The functionality of this function is extremely complex, thus I'd rather not discuss it");
+    m.def("activate_backprop", &activate_backprop, VERY_SCARY);
+    m.def("deactivate_backprop", &deactivate_backprop, VERY_SCARY);
+    m.def("toggle_backprop", &toggle_backprop, VERY_SCARY);
+    m.def("set_backprop_status", &set_backprop_status, py::arg("flag"), VERY_SCARY);
+    m.def("backprop_activated", &backprop_activated, VERY_SCARY);
 }

@@ -36,8 +36,8 @@ Tensor BCELoss(Tensor A, Tensor B) { // a = your distribution, b = expected dist
 
 Tensor CrossEntropyLoss(Tensor A, Tensor B) {
 	if (A.dimension() != B.dimension()) throw_error("Size mismatched when calculating loss");
-	A = SoftMax(A);
-	B = SoftMax(B);
+	A = LinearNormalize(A);
+	B = LinearNormalize(B);
 	return Sum(ValueMultiply(B, Log(A))) * -1;
 }
 
@@ -48,8 +48,8 @@ Tensor HingeLoss(Tensor A, Tensor B) {
 
 Tensor KL_Divergence(Tensor A, Tensor B) {
 	if (A.dimension() != B.dimension()) throw_error("Size mismatched when calculating loss");
-	A = SoftMax(A);
-	B = SoftMax(B);
+	A = LinearNormalize(A);
+	B = LinearNormalize(B);
 
 	Tensor C = Log(ValueMultiply(B, Inverse(A)));
 	return Sum(Abs(ValueMultiply(B, C)));

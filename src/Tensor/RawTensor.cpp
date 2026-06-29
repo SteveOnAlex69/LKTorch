@@ -498,13 +498,13 @@ std::shared_ptr<RawTensor> slice(std::shared_ptr<RawTensor> x, StaticIntVector _
 		r[i + (d.size() - _l.size())] = _r[i];
 	}
 
-
 	for (int i = 0; i < d.size(); ++i) {
 		if (l[i] > r[i])
 			throw_error("L[i] > R[i] when slicing!");
 		if (l[i] < 0) throw_error("L[i] < 0");
 		if (r[i] >= d[i]) throw_error("R[i] >= D[i]");
 	}
+
 
 	StaticIntVector new_d = d;
 	for (int i = 0; i < d.size(); ++i) new_d[i] = r[i] - l[i] + 1;
@@ -513,12 +513,13 @@ std::shared_ptr<RawTensor> slice(std::shared_ptr<RawTensor> x, StaticIntVector _
 	std::pair<int, int> stride(stride1, stride2);
 
 	StaticIntVector perm(std::vector<int>{0});
-	for (int i = 0; i < d.size(); ++i) {
-		StaticIntVector poo(perm.size() * new_d[i]);
+	for (int i = 0; i < _l.size(); ++i) {
+		int p = i + d.size() - _l.size();
+		StaticIntVector poo(perm.size() * new_d[p]);
 		int idx = 0;
 		for (int j = 0; j < perm.size(); ++j) {
-			for (int k = l[i]; k <= r[i]; ++k)
-				poo[idx++] = perm[j] * d[i] + k;
+			for (int k = _l[i]; k <= _r[i]; ++k)
+				poo[idx++] = perm[j] * d[p] + k;
 		}
 		perm = poo;
 	}

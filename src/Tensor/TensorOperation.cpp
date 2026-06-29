@@ -144,7 +144,7 @@ Tensor ScalarDivide(Tensor x, float y) { return x / y; }
 Tensor ScalarAdd(Tensor x, float y) { return x + y; }
 Tensor ScalarSubtract(Tensor x, float y) { return x - y; }
 
-Tensor SoftMax(Tensor x) {
+Tensor LinearNormalize(Tensor x) {
 	std::vector<int> d = x.dimension();
 	if (d.size() == 0) throw_error("In SoftMax Function: Cannot perform on rank-0 tensor");
 
@@ -163,6 +163,27 @@ Tensor SoftMax(Tensor x) {
 }
 
 
+Tensor ExpNormalize(Tensor x) {
+	std::vector<int> d = x.dimension();
+	if (d.size() == 0) throw_error("In SoftMax Function: Cannot perform on rank-0 tensor");
+
+	Tensor y = MaxPool(x);
+	std::vector<int> fi = { (int)d.size() - 1 };
+	for (int i = 0; i + 1 < d.size(); ++i) fi.push_back(i);
+
+	std::vector<int> se = {};
+	for (int i = 0; i + 1 < d.size(); ++i) se.push_back(i + 1);
+	se.push_back(0);
+
+
+	x = PermuteDimension(x, fi);
+	x = x - y;
+	x = PermuteDimension(x, se);
+	x = Exp(x);
+	
+	return LinearNormalize(x);
+}
+
 
 
 Tensor Unfold(Tensor x, std::vector<int> slider_d, std::vector<int> stride, std::vector<int> modulo) {
@@ -176,7 +197,6 @@ Tensor Unfold(Tensor x, std::vector<int> slider_d, std::vector<int> stride, std:
 	std::vector<int> new_dimension;
 	for (int i = 0; i < dimension.size() - slider_d.size(); ++i)
 		new_dimension.push_back(dimension[i]);
-
 
 	for (int i = 0; i < (int)slider_d.size(); ++i) {
 		int cur_d = dimension[dimension.size() - slider_d.size() + i];

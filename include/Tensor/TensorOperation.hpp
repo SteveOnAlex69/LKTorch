@@ -18,7 +18,8 @@ Tensor ValueMultiply(Tensor x, Tensor y);
 // Only Transform The Innermost Layer
 Tensor Sum(Tensor x);
 Tensor Mean(Tensor x);
-Tensor SoftMax(Tensor x);
+Tensor LinearNormalize(Tensor x);
+Tensor ExpNormalize(Tensor x);
 
 Tensor SumAll(Tensor x);
 Tensor MeanAll(Tensor x);

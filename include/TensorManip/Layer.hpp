@@ -72,7 +72,6 @@ constructSimpleLayer(Sinh_Layer, Sinh);
 constructSimpleLayer(Cosh_Layer, Cosh);
 constructSimpleLayer(Tanh_Layer, Tanh);
 
-
 constructSimpleLayer(Min_Layer, Min);
 constructSimpleLayer(Max_Layer, Max);
 constructSimpleLayer(MinPool_Layer, MinPool);
@@ -80,7 +79,9 @@ constructSimpleLayer(MaxPool_Layer, MaxPool);
 
 constructSimpleLayer(Sum_Layer, Sum);
 constructSimpleLayer(Mean_Layer, Mean);
-constructSimpleLayer(SoftMax_Layer, SoftMax);
+constructSimpleLayer(LinearNormalize_Layer, LinearNormalize);
+constructSimpleLayer(ExpNormalize_Layer, ExpNormalize);
+
 
 
 #define constructSinglyLayer(LAYER_NAME, FUNCTION, VARIABLE_TYPE, VARIABLE_NAME) \
@@ -104,6 +105,9 @@ constructSinglyLayer(ScalarMultiply_Layer, ScalarMultiply, int, y);
 constructSinglyLayer(ScalarDivide_Layer, ScalarDivide, int, y);
 
 constructSinglyLayer(Dropout_Layer, Dropout, float, rate);
+
+#undef constructSinglyLayer
+#undef constructSimpleLayer
 
 class Slice_Layer : public Module {
 public:
