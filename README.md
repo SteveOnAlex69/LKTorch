@@ -1,4 +1,4 @@
-![alt text](asset\image-1.png)
+![alt text](image-1.png)
 
 LKTorch is a Python package that provides two high-level features:
 

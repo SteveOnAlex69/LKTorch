@@ -275,6 +275,7 @@ Let's call:
 - The weight between the $u^{th}$ node of the $i^{th}$ layer and the $v^{th}$ node of the $(i+1)^{th}$ layer as $W_{i, u, v}$
 
 Let's recall that:
+
 $$
 X_{i+1, v} = f\left(B_{i+1, v} + \sum X_{i, u} \times W_{u, v}\right)
 $$
