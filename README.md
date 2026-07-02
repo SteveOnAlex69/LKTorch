@@ -1,11 +1,11 @@
-﻿![alt text](image-1.png)
+![alt text](asset\image-1.png)
 
 LKTorch is a Python package that provides two high-level features:
 
 - Tensor computation (like NumPy) with no GPU acceleration!!
 - Deep neural networks built on a tape-based autograd system
 
-Essentially, this is a hobby project of a college student trying to clone Pytorch!
+Essentially, this is a hobby project of a college student trying to clone Pytorch from scratch!
 
 This library is compatible with numpy (converting from numpy array to lk.Tensor, and vice versa)
 
@@ -28,7 +28,7 @@ LKTorch is a library that consist of the following elements:
 
 You may ask: what is a tensor, is it edible, and why is everyone talking about it in Machine Learning? 
 
-When we started programming, we learn how to manipulate variable around, from simple operations like addition, multiplication, to the more complex ones, such as GCD or exponentiation.
+When we started programming, we learn how to manipulate variable around, from simple operations like addition, multiplication, to the more complex ones like GCD.
 
 However, there is not much fun thing that can be solved with singular variables. So there comes the concept of an array. An array is a list of variables, therefore it is exponentially more interesting.
 
@@ -40,11 +40,31 @@ LKTorch offers way to manipulate tensors around. Obviously, it is much weaker th
 
 ### Dynamic Neural Network
 
-*Prerequisite knowledge 1: A neural network is a structure that takes in a tensor, and spit out a tensor.*
+<details>
+<summary>Prerequisite Knowledge:</summary>
 
-*Prerequisite knowledge 2: Most of the time, one or more tensor will be involved in the structure of the neural network to perform linear transform like tensor addition, multiplication. However, in its untrained state, neural network usually spit out bullcrap, which means we have to  use loss function to punish it.*
+<details>
+<summary>Prerequisite knowledge 1:</summary> 
 
-*Prerequisite knowledge 3: You can make the neural network learn your dataset, by calculating the gradient of the entire network with respect to the loss function. Then, you gradient descent, which means you modify the tensor value with the goal of making the loss smaller.*
+*A neural network is a structure that takes in a tensor, and spit out a tensor.*
+</details>
+
+
+<details>
+<summary>Prerequisite knowledge 2:</summary> 
+
+*Most of the time, one or more tensor will be involved in the structure of the neural network to perform linear transform like tensor addition, multiplication. However, in its untrained state, neural network usually spit out bullcrap, which means we have to  use loss function to punish it.*
+</details>
+
+
+<details>
+<summary>Prerequisite knowledge 3:</summary> 
+
+*You can make the neural network learn your dataset, by calculating the gradient of the entire network with respect to the loss function. Then, you gradient descent, which means you modify the tensor value with the goal of making the loss smaller.*
+</details>
+
+</details>
+
 
 Other libraries, like TensorFlow, force you to build the neural network before hand, and only then, could you start to use that to manipulate data and train it. This static behavior sometimes restrict you.
 
@@ -84,3 +104,37 @@ What?
 In all seriousness, this was more of a learning project than an actual production code, so I didn't use any helping library aside from **pybind11** to bind my code into python.
 </details>
 
+## How to install?
+
+### On Window:
+
+Simply type into Command Prompt (cmd)
+```
+pip install lktorch
+```
+
+and we are done!
+
+### On OS that is not Window:
+
+What?
+
+## How to install from repo
+
+
+### On Window:
+
+Simply type into Command Prompt (cmd)
+```
+pip install -e .
+```
+
+and we are done!
+
+### On OS that is not Window:
+
+What?
+
+## My thought process
+
+If you are interested on my thought process, and how this project was conceived, check this out: [How did I build LKTorch?](docs/HOW.md)
